@@ -90,43 +90,29 @@ class Cenario{
         this.scene.add(luzPontual);
     }
 
+    adicionarModelo(modelo, x, y, z, escala, rotacaoY = 0) {
+        const clone = modelo.clone();
+
+        clone.position.set(x, y, z);
+        clone.scale.setScalar(escala);
+        clone.rotation.y = rotacaoY;
+
+        this.scene.add(clone);
+    }
+
     criarMontanha() {
     const loader = new GLTFLoader();
         
         // https://poly.pizza/m/OQvi8PIZ40
         loader.load('./Rocks by Quaternius - OQvi8PIZ40.glb', (gltf) => {
-        const montanha = gltf.scene;
+            const montanha = gltf.scene;
 
-        const montanha1 = montanha.clone()
-        montanha1.position.set(0, 0, -25);
-        montanha1.scale.setScalar(100);
-        this.scene.add(montanha1);
-
-        const montanha2 = montanha.clone()
-        montanha2.position.set(-20, -10, 0);
-        montanha2.scale.setScalar(200);
-        this.scene.add(montanha2);
-
-        const montanha3 = montanha.clone()
-        montanha3.position.set(0, -5, 30);
-        montanha3.scale.setScalar(150);
-        this.scene.add(montanha3);
-
-        const montanha4 = montanha.clone()
-        montanha4.position.set(30, -2, -5);
-        montanha4.rotation.y = -Math.PI ;
-        montanha4.scale.setScalar(150);
-        this.scene.add(montanha4);
-    });
-    }
-
-    adicionarArvore(modelo, x, y, z, escala) {
-        const arvore = modelo.clone();
-
-        arvore.position.set(x, y, z);
-        arvore.scale.setScalar(escala);
-
-        this.scene.add(arvore);
+            // modelo, x, y, z, escala, rotação Y
+            this.adicionarModelo(montanha, 0, 0, -25, 100);
+            this.adicionarModelo(montanha, -20, -10, 0, 200);
+            this.adicionarModelo(montanha, 0, -5, 30, 150);
+            this.adicionarModelo(montanha, 30, -2, -5, 150, -Math.PI);
+        });
     }
 
     criarArvores(){
@@ -134,21 +120,21 @@ class Cenario{
         
         // https://poly.pizza/m/s6yZuyU2y5
         loader.load('./Tree by MaverickFX - s6yZuyU2y5.glb', (gltf) => {
-        const arvore = gltf.scene;
+            const arvore = gltf.scene;
 
             //modelo, x, y, z, escala
-            this.adicionarArvore(arvore, -10, 2, -10, 3);
-            this.adicionarArvore(arvore, -8, 2, -13, 1);
-            this.adicionarArvore(arvore, -15, 2, -10, 2);
-            this.adicionarArvore(arvore, 10, 2, -20, 3);
-            this.adicionarArvore(arvore, 15, 2, -10, 3);
-            this.adicionarArvore(arvore, 15, 2, -15, 2);
-            this.adicionarArvore(arvore, -5, 0, -2, 1);
-            this.adicionarArvore(arvore, -5, 0, -2, 1);
-            this.adicionarArvore(arvore, 9, 0, 5, 1);
-            this.adicionarArvore(arvore, 10, 0, 10, 2);
-            this.adicionarArvore(arvore, -10, 2, 10, 3);
-            this.adicionarArvore(arvore, -14, 2, 5, 2.5);
+            this.adicionarModelo(arvore, -10, 2, -10, 3);
+            this.adicionarModelo(arvore, -8, 2, -13, 1);
+            this.adicionarModelo(arvore, -15, 2, -10, 2);
+            this.adicionarModelo(arvore, 10, 2, -20, 3);
+            this.adicionarModelo(arvore, 15, 2, -10, 3);
+            this.adicionarModelo(arvore, 15, 2, -15, 2);
+            this.adicionarModelo(arvore, -5, 0, -2, 1);
+            this.adicionarModelo(arvore, -5, 0, -2, 1);
+            this.adicionarModelo(arvore, 9, 0, 5, 1);
+            this.adicionarModelo(arvore, 10, 0, 10, 2);
+            this.adicionarModelo(arvore, -10, 2, 10, 3);
+            this.adicionarModelo(arvore, -14, 2, 5, 2.5);
         
         })
     }
