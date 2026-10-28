@@ -2,6 +2,14 @@ import * as THREE from 'three';
 import { FBXLoader } from 'three/addons/loaders/FBXLoader.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
+class Controles {
+    constructor() {
+        this.teclas = {};
+        window.addEventListener('keydown', (e) => this.teclas[e.code] = true);
+        window.addEventListener('keyup', (e) => this.teclas[e.code] = false);
+    }
+}
+
 // classe do Renderizador (WebGL)
 class Renderer{
     constructor(){
@@ -21,16 +29,30 @@ class Renderer{
 class Camera{
     constructor(){
         this.camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
-        this.camera.position.set(10, 10, 20);
+        this.angulo = Math.PI / 4;
+        this.raio = 14.14;         
+        this.altura = 10;
+
+        this.atualizarPosicao();
+    }
+
+    atualizarPosicao() {
+        this.camera.position.x = this.raio * Math.sin(this.angulo);
+        this.camera.position.z = this.raio * Math.cos(this.angulo);
+        this.camera.position.y = this.altura;
+        
+        // fixa camera no centro(talvez ajustar dps para seguir o personagem)
         this.camera.lookAt(0, 0, 0);
     }
 
-    setPosition(x,y,z){
-        this.camera.position.set(x,y,z);
+    orbitarEsquerda(velocidade = 0.03) {
+        this.angulo -= velocidade;
+        this.atualizarPosicao();
     }
 
-    setLook(x,y,z){
-        this.camera.lookAt(x,y,z);
+    orbitarDireita(velocidade = 0.03) {
+        this.angulo += velocidade;
+        this.atualizarPosicao();
     }
 }
 
@@ -61,6 +83,11 @@ class Cenario{
         const luzAmbiente = new THREE.AmbientLight(0xffffff, 1);
 
         this.scene.add(luzAmbiente);
+
+        const luzPontual = new THREE.PointLight(0xffffff, 100);
+        luzPontual.position.set(0, 5, 0);
+
+        this.scene.add(luzPontual);
     }
 
     criarMontanha() {
@@ -93,6 +120,15 @@ class Cenario{
     });
     }
 
+    adicionarArvore(modelo, x, y, z, escala) {
+        const arvore = modelo.clone();
+
+        arvore.position.set(x, y, z);
+        arvore.scale.setScalar(escala);
+
+        this.scene.add(arvore);
+    }
+
     criarArvores(){
         const loader = new GLTFLoader();
         
@@ -100,30 +136,20 @@ class Cenario{
         loader.load('./Tree by MaverickFX - s6yZuyU2y5.glb', (gltf) => {
         const arvore = gltf.scene;
 
-        const arvore1 = arvore.clone()
-        arvore1.position.set(-10, 2, -10);
-        arvore1.scale.setScalar(3);
-        this.scene.add(arvore1);
-
-        const arvore2 = arvore.clone()
-        arvore2.position.set(-8, 2, -13);
-        arvore2.scale.setScalar(1);
-        this.scene.add(arvore2);
-
-        const arvore3 = arvore.clone()
-        arvore3.position.set(-15, 2, -10);
-        arvore3.scale.setScalar(2);
-        this.scene.add(arvore3);
-
-        const arvore4 = arvore.clone()
-        arvore4.position.set(10, 2, -20);
-        arvore4.scale.setScalar(3);
-        this.scene.add(arvore4);
-
-        const arvore5 = arvore.clone()
-        arvore5.position.set(15, 2, -10);
-        arvore5.scale.setScalar(3);
-        this.scene.add(arvore5);
+            //modelo, x, y, z, escala
+            this.adicionarArvore(arvore, -10, 2, -10, 3);
+            this.adicionarArvore(arvore, -8, 2, -13, 1);
+            this.adicionarArvore(arvore, -15, 2, -10, 2);
+            this.adicionarArvore(arvore, 10, 2, -20, 3);
+            this.adicionarArvore(arvore, 15, 2, -10, 3);
+            this.adicionarArvore(arvore, 15, 2, -15, 2);
+            this.adicionarArvore(arvore, -5, 0, -2, 1);
+            this.adicionarArvore(arvore, -5, 0, -2, 1);
+            this.adicionarArvore(arvore, 9, 0, 5, 1);
+            this.adicionarArvore(arvore, 10, 0, 10, 2);
+            this.adicionarArvore(arvore, -10, 2, 10, 3);
+            this.adicionarArvore(arvore, -14, 2, 5, 2.5);
+        
         })
     }
 
@@ -138,6 +164,7 @@ class Cenario{
 
 // Inicialização das classes e loop de animação
 // Personagem importado do MIXAMO Paladin W + Crouched Walking https://www.mixamo.com/#/
+// Inimigo Maynard + Magic Attack 01
 class Jogo {
     constructor() {
         // inicializa a cena
@@ -153,10 +180,16 @@ class Jogo {
 
         // inicializa o personagem
         this.personagem = new Personagem("./personagem.fbx", this.scene);
+
+        this.inimigo1 = new Inimigo("./inimigo.fbx", this.scene, 0, 0, 5, Math.PI); // rotação em 180
+
+        // inicializa os controles
+        this.controles = new Controles();
     }
     
     iniciar() {
         this.cenario.renderizar();
+        this.inimigo1.carregar();
         this.personagem.carregar();
         this.animar();
     }
@@ -164,8 +197,19 @@ class Jogo {
     animar = () => {
         requestAnimationFrame(this.animar);
 
+        // animação da câmera
+        if (this.controles.teclas['ArrowLeft']) {
+            this.camera.orbitarEsquerda();
+        }
+        if (this.controles.teclas['ArrowRight']) {
+            this.camera.orbitarDireita();
+        }
+
         // animação do personagem
         this.personagem.atualizar();
+
+        // animação do inimigo
+        this.inimigo1.atualizar();
 
         this.renderer.draw(this.scene,this.camera.camera);
     };
@@ -217,7 +261,52 @@ class Personagem {
     }
 }
 
+    class Inimigo {
+        constructor(url, scene, x, y, z, rotacaoY) {
+            this.inimigo = null;
+            this.url = url;
+            this.loader = new FBXLoader();
+            this.mixer = null;
+            this.scene = scene;
+            this.clock = new THREE.Clock();
 
+            this.posX = x;
+            this.posY = y;
+            this.posZ = z;
+            this.rotacaoY = rotacaoY;
+        }
+        
+        carregar() {
+            this.loader.load(this.url,
+                (inimigo) => {
+                    this.inimigo = inimigo;
+                    inimigo.scale.setScalar(0.01);
+                    inimigo.position.set(this.posX, this.posY, this.posZ);
+                    inimigo.rotation.y = this.rotacaoY;
+                    this.scene.add(inimigo);
+
+                    this.mixer = new THREE.AnimationMixer(inimigo);
+                    const animacao = inimigo.animations[0];
+
+                    if (animacao) {
+                        this.mixer.clipAction(animacao).play();
+                    }
+                },
+                () => {
+                    console.log("Carregando inimigo");
+                },
+                (erro) => {
+                    console.error('Erro ao carregar inimigo:', erro);
+                }
+            );
+        }
+
+        atualizar() {
+        if (this.mixer) {
+            this.mixer.update(this.clock.getDelta());
+        }
+    }
+}
 
 const jogo = new Jogo();
 jogo.iniciar();
