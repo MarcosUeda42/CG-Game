@@ -1,6 +1,14 @@
 import * as THREE from 'three';
 import { FBXLoader } from 'three/addons/loaders/FBXLoader.js';
 
+class Controles {
+    constructor() {
+        this.teclas = {};
+        window.addEventListener('keydown', (e) => this.teclas[e.code] = true);
+        window.addEventListener('keyup', (e) => this.teclas[e.code] = false);
+    }
+}
+
 // classe do Renderizador (WebGL)
 class Renderer{
     constructor(){
@@ -20,16 +28,30 @@ class Renderer{
 class Camera{
     constructor(){
         this.camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
-        this.camera.position.set(10, 10, 10);
+        this.angulo = Math.PI / 4;
+        this.raio = 14.14;         
+        this.altura = 10;
+
+        this.atualizarPosicao();
+    }
+
+    atualizarPosicao() {
+        this.camera.position.x = this.raio * Math.sin(this.angulo);
+        this.camera.position.z = this.raio * Math.cos(this.angulo);
+        this.camera.position.y = this.altura;
+        
+        // fixa camera no centro(talvez ajustar dps para seguir o personagem)
         this.camera.lookAt(0, 0, 0);
     }
 
-    setPosition(x,y,z){
-        this.camera.position.set(x,y,z);
+    orbitarEsquerda(velocidade = 0.03) {
+        this.angulo -= velocidade;
+        this.atualizarPosicao();
     }
 
-    setLook(x,y,z){
-        this.camera.lookAt(x,y,z);
+    orbitarDireita(velocidade = 0.03) {
+        this.angulo += velocidade;
+        this.atualizarPosicao();
     }
 }
 
@@ -86,6 +108,9 @@ class Jogo {
 
         // inicializa o personagem
         this.personagem = new Personagem("./personagem.fbx", this.scene);
+
+        // inicializa os controles
+        this.controles = new Controles();
     }
     
     iniciar() {
@@ -96,6 +121,14 @@ class Jogo {
 
     animar = () => {
         requestAnimationFrame(this.animar);
+
+        // animação da câmera
+        if (this.controles.teclas['ArrowLeft']) {
+            this.camera.orbitarEsquerda();
+        }
+        if (this.controles.teclas['ArrowRight']) {
+            this.camera.orbitarDireita();
+        }
 
         // animação do personagem
         this.personagem.atualizar();
