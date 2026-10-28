@@ -70,6 +70,7 @@ class Cenario{
 
 
 // Inicialização das classes e loop de animação
+// Personagem importado do MIXAMO Paladin W + Crouched Walking https://www.mixamo.com/#/
 class Jogo {
     constructor() {
         // inicializa a cena
