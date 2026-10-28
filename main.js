@@ -93,6 +93,7 @@ class Cenario{
 
 // Inicialização das classes e loop de animação
 // Personagem importado do MIXAMO Paladin W + Crouched Walking https://www.mixamo.com/#/
+// Inimigo Maynard + Magic Attack 01
 class Jogo {
     constructor() {
         // inicializa a cena
@@ -109,12 +110,15 @@ class Jogo {
         // inicializa o personagem
         this.personagem = new Personagem("./personagem.fbx", this.scene);
 
+        this.inimigo1 = new Inimigo("./inimigo.fbx", this.scene, 0, 0, 5, Math.PI); // rotação em 180
+
         // inicializa os controles
         this.controles = new Controles();
     }
     
     iniciar() {
         this.cenario.renderizar();
+        this.inimigo1.carregar();
         this.personagem.carregar();
         this.animar();
     }
@@ -132,6 +136,9 @@ class Jogo {
 
         // animação do personagem
         this.personagem.atualizar();
+
+        // animação do inimigo
+        this.inimigo1.atualizar();
 
         this.renderer.draw(this.scene,this.camera.camera);
     };
@@ -177,6 +184,53 @@ class Personagem {
 
     // atualiza com base no clock
     atualizar() {
+        if (this.mixer) {
+            this.mixer.update(this.clock.getDelta());
+        }
+    }
+}
+
+    class Inimigo {
+        constructor(url, scene, x, y, z, rotacaoY) {
+            this.inimigo = null;
+            this.url = url;
+            this.loader = new FBXLoader();
+            this.mixer = null;
+            this.scene = scene;
+            this.clock = new THREE.Clock();
+
+            this.posX = x;
+            this.posY = y;
+            this.posZ = z;
+            this.rotacaoY = rotacaoY;
+        }
+        
+        carregar() {
+            this.loader.load(this.url,
+                (inimigo) => {
+                    this.inimigo = inimigo;
+                    inimigo.scale.setScalar(0.01);
+                    inimigo.position.set(this.posX, this.posY, this.posZ);
+                    inimigo.rotation.y = this.rotacaoY;
+                    this.scene.add(inimigo);
+
+                    this.mixer = new THREE.AnimationMixer(inimigo);
+                    const animacao = inimigo.animations[0];
+
+                    if (animacao) {
+                        this.mixer.clipAction(animacao).play();
+                    }
+                },
+                () => {
+                    console.log("Carregando inimigo");
+                },
+                (erro) => {
+                    console.error('Erro ao carregar inimigo:', erro);
+                }
+            );
+        }
+
+        atualizar() {
         if (this.mixer) {
             this.mixer.update(this.clock.getDelta());
         }
