@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { FBXLoader } from 'three/addons/loaders/FBXLoader.js';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
 // classe do Renderizador (WebGL)
 class Renderer{
@@ -20,7 +21,7 @@ class Renderer{
 class Camera{
     constructor(){
         this.camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
-        this.camera.position.set(10, 10, 10);
+        this.camera.position.set(10, 10, 20);
         this.camera.lookAt(0, 0, 0);
     }
 
@@ -62,9 +63,75 @@ class Cenario{
         this.scene.add(luzAmbiente);
     }
 
+    criarMontanha() {
+    const loader = new GLTFLoader();
+        
+        // https://poly.pizza/m/OQvi8PIZ40
+        loader.load('./Rocks by Quaternius - OQvi8PIZ40.glb', (gltf) => {
+        const montanha = gltf.scene;
+
+        const montanha1 = montanha.clone()
+        montanha1.position.set(0, 0, -25);
+        montanha1.scale.setScalar(100);
+        this.scene.add(montanha1);
+
+        const montanha2 = montanha.clone()
+        montanha2.position.set(-20, -10, 0);
+        montanha2.scale.setScalar(200);
+        this.scene.add(montanha2);
+
+        const montanha3 = montanha.clone()
+        montanha3.position.set(0, -5, 30);
+        montanha3.scale.setScalar(150);
+        this.scene.add(montanha3);
+
+        const montanha4 = montanha.clone()
+        montanha4.position.set(30, -2, -5);
+        montanha4.rotation.y = -Math.PI ;
+        montanha4.scale.setScalar(150);
+        this.scene.add(montanha4);
+    });
+    }
+
+    criarArvores(){
+        const loader = new GLTFLoader();
+        
+        // https://poly.pizza/m/s6yZuyU2y5
+        loader.load('./Tree by MaverickFX - s6yZuyU2y5.glb', (gltf) => {
+        const arvore = gltf.scene;
+
+        const arvore1 = arvore.clone()
+        arvore1.position.set(-10, 2, -10);
+        arvore1.scale.setScalar(3);
+        this.scene.add(arvore1);
+
+        const arvore2 = arvore.clone()
+        arvore2.position.set(-8, 2, -13);
+        arvore2.scale.setScalar(1);
+        this.scene.add(arvore2);
+
+        const arvore3 = arvore.clone()
+        arvore3.position.set(-15, 2, -10);
+        arvore3.scale.setScalar(2);
+        this.scene.add(arvore3);
+
+        const arvore4 = arvore.clone()
+        arvore4.position.set(10, 2, -20);
+        arvore4.scale.setScalar(3);
+        this.scene.add(arvore4);
+
+        const arvore5 = arvore.clone()
+        arvore5.position.set(15, 2, -10);
+        arvore5.scale.setScalar(3);
+        this.scene.add(arvore5);
+        })
+    }
+
     renderizar() {
         this.criarTerreno();
         this.criarIluminacao();
+        this.criarMontanha();
+        this.criarArvores();
     }
 }
 
@@ -149,6 +216,8 @@ class Personagem {
         }
     }
 }
+
+
 
 const jogo = new Jogo();
 jogo.iniciar();
