@@ -32,3 +32,79 @@
 - Separar o código em partes independentes (jogador, inimigos, projéteis, sistema de ondas, interface) usando POO, similar visto em atividades apresentadas em sala;
 - Spawn de inimigos por regras e fórmulas de dificuldade, em vez de ondas totalmente fixas;
 - Controle e otimização de spawn na criação de projéteis, para não deixar o jogo travado.
+
+## Estado atual do projeto
+
+Atualmente já foram implementados:
+
+- Cena 3D utilizando Three.js;
+- Câmera com projeção perspectiva;
+- Movimentação orbital da câmera pelas setas do teclado;
+- Terreno;
+- Iluminação ambiente e pontual;
+- Personagem principal 3D animado;
+- Inimigo 3D animado;
+- Árvores e formações rochosas no cenário;
+- Posicionamento, escala e rotação dos elementos da cena.
+
+## Modelos e animações utilizados
+
+### Personagem principal
+- Paladin W;
+- Animação Crouched Walking.
+
+Fonte:  
+https://www.mixamo.com/
+
+### Inimigo
+- Maynard;
+- Animação Magic Attack 01.
+
+Fonte:  
+https://www.mixamo.com/
+
+### Rochas
+Fonte:  
+https://poly.pizza/m/OQvi8PIZ40
+
+### Árvores
+Fonte:  
+https://poly.pizza/m/s6yZuyU2y5
+
+## Controles atuais
+
+- `←` movimenta a câmera para a esquerda;
+- `→` movimenta a câmera para a direita.
+
+## Como executar
+
+1. Clone o repositório:
+
+```bash
+git clone https://github.com/MarcosUeda42/CG-Game.git
+```
+
+2. Entre na pasta do projeto.
+
+3. Abra o arquivo `index.html` utilizando um servidor local, como **Live Server**.
+
+## O que ainda falta implementar
+
+Entre os principais elementos previstos estão:
+
+- Movimentação do jogador;
+- Câmera acompanhando o jogador;
+- Sistema de disparos e projéteis;
+- Comportamento dos inimigos;
+- Sistema de hordas;
+- Colisões;
+- Barra de vida e dano;
+- Pontuação;
+- Recompensas e evolução;
+- Inimigos especiais;
+- Múltiplas posições de câmera;
+- Texturas adicionais;
+- Efeitos visuais e sonoros;
+- Condição de derrota;
+- Ranking local;
+- Otimizações para grandes quantidades de inimigos e projéteis.
