@@ -1,0 +1,23 @@
+{
+  "name": "cg-game",
+  "version": "1.0.0",
+  "description": "- Docente:   - Ana Luisa Dine Martins Lemos - Alunos:   - Davi Torres   - Erik dos Santos Reis   - Felipe Tashiro   - Guilherme Samuel dos Santos   - Marcos Ueda",
+  "homepage": "https://github.com/MarcosUeda42/CG-Game#readme",
+  "bugs": {
+    "url": "https://github.com/MarcosUeda42/CG-Game/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MarcosUeda42/CG-Game.git"
+  },
+  "license": "ISC",
+  "author": "",
+  "type": "commonjs",
+  "main": "main.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "devDependencies": {
+    "prettier": "3.9.10"
+  }
+}
