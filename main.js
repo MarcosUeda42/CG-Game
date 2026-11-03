@@ -34,17 +34,21 @@ class Camera {
       0.1,
       1000,
     );
-    this.angulo = 0; 
-    this.raio = 14.14;
-    this.altura = 13;
+    this.angulo = 0;
+    this.raio = [14, 10];
+    this.altura = [30, 4];
 
+    this.modo = 0;
     //this.atualizarPosicao();
   }
 
-  atualizarPosicao(pos) { 
-    this.camera.position.x = pos.x +this.raio * Math.sin(this.angulo);
-    this.camera.position.z = pos.z +this.raio * Math.cos(this.angulo);
-    this.camera.position.y = pos.y +this.altura;
+  atualizarPosicao(pos) {
+    const r = this.raio[this.modo];
+    const a = this.altura[this.modo];
+
+    this.camera.position.x = pos.x + r * Math.sin(this.angulo);
+    this.camera.position.z = pos.z + r * Math.cos(this.angulo);
+    this.camera.position.y = pos.y + a;
 
     // camera olha para o personagem
     this.camera.lookAt(pos.x, pos.y, pos.z);
@@ -65,11 +69,12 @@ class Camera {
 class Cenario {
   constructor(scene) {
     this.scene = scene;
+    this.hitboxesParedes = [];
   }
 
   criarTerreno() {
     // define uma geometria plana e o material
-    const geometria = new THREE.PlaneGeometry(50, 50);
+    const geometria = new THREE.PlaneGeometry(100, 100);
     const material = new THREE.MeshStandardMaterial({
       color: 0x008000,
       side: THREE.DoubleSide,
@@ -83,14 +88,9 @@ class Cenario {
   }
 
   criarIluminacao() {
-    const luzAmbiente = new THREE.AmbientLight(0xffffff, 1);
+    const luzAmbiente = new THREE.AmbientLight(0xffffff, 0.1);
 
     this.scene.add(luzAmbiente);
-
-    const luzPontual = new THREE.PointLight(0xffffff, 100);
-    luzPontual.position.set(0, 5, 0);
-
-    this.scene.add(luzPontual);
   }
 
   adicionarModelo(modelo, x, y, z, escala, rotacaoY = 0) {
@@ -101,6 +101,8 @@ class Cenario {
     clone.rotation.y = rotacaoY;
 
     this.scene.add(clone);
+
+    return clone;
   }
 
   criarMontanha() {
@@ -111,10 +113,10 @@ class Cenario {
       const montanha = gltf.scene;
 
       // modelo, x, y, z, escala, rotação Y
-      this.adicionarModelo(montanha, 0, 0, -25, 100);
-      this.adicionarModelo(montanha, -20, -10, 0, 200);
-      this.adicionarModelo(montanha, 0, -5, 30, 150);
-      this.adicionarModelo(montanha, 30, -2, -5, 150, -Math.PI);
+      this.adicionarModelo(montanha, 0, 0, -45, 100);
+      this.adicionarModelo(montanha, -30, -10, 0, 200);
+      this.adicionarModelo(montanha, 0, -5, 50, 150);
+      this.adicionarModelo(montanha, 50, -2, -5, 150, -Math.PI);
     });
   }
 
@@ -127,7 +129,7 @@ class Cenario {
 
       //modelo, x, y, z, escala
       this.adicionarModelo(arvore, -10, 2, -10, 3);
-      this.adicionarModelo(arvore, -8, 2, -13, 1);
+      this.adicionarModelo(arvore, -8, 1, -13, 1);
       this.adicionarModelo(arvore, -15, 2, -10, 2);
       this.adicionarModelo(arvore, 10, 2, -20, 3);
       this.adicionarModelo(arvore, 15, 2, -10, 3);
@@ -141,11 +143,85 @@ class Cenario {
     });
   }
 
+  adicionarTocha(tocha, x, y, z) {
+    this.adicionarModelo(tocha, x, y, z, 0.75);
+
+    const luzTocha = new THREE.PointLight(0xff6600, 30);
+    luzTocha.position.set(x, y + 2.5, z);
+
+    this.scene.add(luzTocha);
+  }
+
+  criarTochas() {
+    const loader = new GLTFLoader();
+
+    // https://poly.pizza/m/pNsfJzhXiD
+    loader.load("./Wooden Torch by Quaternius - pNsfJzhXiD.glb", (gltf) => {
+      const tocha = gltf.scene;
+
+      this.adicionarTocha(tocha, -18, 0, 3, 0.75);
+      this.adicionarTocha(tocha, -3, 0, -8, 0.75);
+      this.adicionarTocha(tocha, -7, 0, 9, 0.75);
+      this.adicionarTocha(tocha, 6, 0, -6, 0.75);
+      this.adicionarTocha(tocha, 4, 0, 8, 0.75);
+    });
+  }
+
+  criarGrama() {
+    const loader = new GLTFLoader();
+
+    // https://poly.pizza/m/vUJjrRsFp4
+    loader.load("./Grass by Quaternius - vUJjrRsFp4.glb", (gltf) => {
+      const grama = gltf.scene;
+
+      for (let i = 0; i < 50; i++) {
+        const x = Math.random() * 50 - 25;
+        const z = Math.random() * 50 - 25;
+        const escala = 0.8 + Math.random() * 0.7;
+
+        this.adicionarModelo(grama, x, 0, z, escala);
+      }
+    });
+  }
+
+  criarParede() {
+    const loader = new GLTFLoader();
+
+    // https://poly.pizza/m/5d80r2XX3O
+    loader.load(
+      "./Wall Towers Door Seco by Quaternius - 5d80r2XX3O.glb",
+      (gltf) => {
+        const parede = gltf.scene;
+
+        const paredes = [
+          this.adicionarModelo(parede, 0, 0, -25, 25),
+          this.adicionarModelo(parede, 0, 0, 25, 25),
+          this.adicionarModelo(parede, 25, 0, 0, 25, -Math.PI / 2),
+          this.adicionarModelo(parede, -25, 0, 0, 25, -Math.PI / 2),
+        ];
+
+        paredes.forEach((obj) => {
+          obj.updateMatrixWorld(true);
+
+          const hitbox = new THREE.Box3().setFromObject(obj);
+
+          this.hitboxesParedes.push(hitbox);
+          console.log("Hitbox:", hitbox);
+          const helper = new THREE.Box3Helper(hitbox, 0x00ff00);
+          this.scene.add(helper);
+        });
+      },
+    );
+  }
+
   renderizar() {
     this.criarTerreno();
     this.criarIluminacao();
     this.criarMontanha();
     this.criarArvores();
+    this.criarTochas();
+    this.criarGrama();
+    this.criarParede();
   }
 }
 
@@ -156,7 +232,7 @@ class Jogo {
   constructor() {
     // inicializa a cena
     this.scene = new THREE.Scene();
-    this.scene.background = new THREE.Color("skyblue");
+    this.scene.background = new THREE.Color("midnightblue");
 
     // inicializa a camera e renderizador
     this.camera = new Camera();
@@ -173,7 +249,7 @@ class Jogo {
       "./personagem/model.glb",
       this.scene,
       this.controles,
-      this.camera.camera
+      this.cenario
     );
 
     this.inimigo1 = new Inimigo("./inimigo.fbx", this.scene, 0, 0, 5, Math.PI); // rotação em 180
@@ -190,19 +266,22 @@ class Jogo {
     requestAnimationFrame(this.animar);
 
     // animação da câmera
-    /*
-        if (this.controles.teclas['ArrowLeft']) {
-            this.camera.orbitarEsquerda();
-        }
-        else if (this.controles.teclas['ArrowRight']) {
-            this.camera.orbitarDireita();
-        }
-        */
+
+    if (this.controles.teclas["KeyQ"]) {
+      this.camera.orbitarEsquerda();
+    } else if (this.controles.teclas["KeyE"]) {
+      this.camera.orbitarDireita();
+    }
+
+    if (this.controles.teclas["KeyC"]) {
+      this.camera.modo = (this.camera.modo + 1) % 2;
+      this.controles.teclas["KeyC"] = false;
+    }
 
     this.personagem.atualizar();
 
     // animação do inimigo
-    this.inimigo1.atualizar();
+    this.inimigo1.atualizar(this.personagem.personagem);
 
     const position = this.personagem.position();
 

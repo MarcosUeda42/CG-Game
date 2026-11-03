@@ -2,10 +2,11 @@ import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 
 export default class Personagem {
-  constructor(url, scene, controles) {
+  constructor(url, scene, controles, cenario) {
     this.personagem = null;
     this.url = url;
     this.controles = controles;
+    this.cenario = cenario,
     this.loader = new GLTFLoader();
     this.mixer = null;
     this.scene = scene;
@@ -14,6 +15,7 @@ export default class Personagem {
     this.clock = new THREE.Clock();
     this.velocidade = 3;
     this.velocidadeGiro = 10;
+    this.hitbox = new THREE.Box3();
     this.direcoes = {
       KeyW: new THREE.Vector3(0, 0, -1),
       KeyS: new THREE.Vector3(0, 0, 1),
@@ -30,6 +32,12 @@ export default class Personagem {
         this.personagem.scale.setScalar(0.01); // ajuste se necessário (ex.: 0.01 para FBX)
         this.personagem.position.set(1, 1, 1);
         this.scene.add(this.personagem);
+        
+        this.hitbox = new THREE.Box3();
+        this.personagem.updateMatrixWorld(true);
+
+        this.helper = new THREE.Box3Helper(this.hitbox, 0xff0000);
+        this.scene.add(this.helper);
 
         this.mixer = new THREE.AnimationMixer(this.personagem);
 
@@ -72,28 +80,44 @@ export default class Personagem {
   atualizar() {
     const delta = this.clock.getDelta();
     if (this.mixer) this.mixer.update(delta);
-
+    
     if (!this.personagem) return;
+
+    const posicaoAnterior = this.personagem.position.clone();
 
     const direcao = new THREE.Vector3();
     for (const tecla in this.direcoes)
       if (this.controles.teclas[tecla]) direcao.add(this.direcoes[tecla]);
-
+    
     if (direcao.lengthSq() > 0) {
       const passo = this.velocidade * delta;
       direcao.normalize();
       this.personagem.position.addScaledVector(direcao, passo);
       const alvo = Math.atan2(direcao.x, direcao.z);
-
+      
       let diferenca = alvo - this.personagem.rotation.y;
       diferenca = Math.atan2(Math.sin(diferenca), Math.cos(diferenca));
-
+      
       // tirei do cláudio
       const fator = 1 - Math.exp(-this.velocidadeGiro * delta);
       this.personagem.rotation.y += diferenca * fator;
-
+      
       this.mudarAnimacao("Walk");
     } else this.mudarAnimacao("Idle");
+    this.hitbox = this.hitbox.setFromObject(this.personagem);
+
+    for (const parede of this.cenario.hitboxesParedes) {
+      if (this.hitbox.intersectsBox(parede)) {
+
+      this.personagem.position.copy(posicaoAnterior);
+
+      this.personagem.updateMatrixWorld(true);
+      this.hitbox.setFromObject(this.personagem);
+
+      break;
+    }
+  }
+
   }
   
   position(){
