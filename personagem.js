@@ -15,10 +15,10 @@ export default class Personagem {
     this.velocidade = 3;
     this.velocidadeGiro = 10;
     this.direcoes = {
-      ArrowUp: new THREE.Vector3(0, 0, -1),
-      ArrowDown: new THREE.Vector3(0, 0, 1),
-      ArrowLeft: new THREE.Vector3(-1, 0, 0),
-      ArrowRight: new THREE.Vector3(1, 0, 0),
+      KeyW: new THREE.Vector3(0, 0, -1),
+      KeyS: new THREE.Vector3(0, 0, 1),
+      KeyA: new THREE.Vector3(-1, 0, 0),
+      KeyD: new THREE.Vector3(1, 0, 0),
     };
   }
 
