@@ -35,16 +35,20 @@ class Camera {
       1000,
     );
     this.angulo = 0; 
-    this.raio = 14.14;
-    this.altura = 8;
+    this.raio = [14, 10];
+    this.altura = [8, 4];
 
+    this.modo = 0;
     //this.atualizarPosicao();
   }
 
   atualizarPosicao(pos) { 
-    this.camera.position.x = pos.x +this.raio * Math.sin(this.angulo);
-    this.camera.position.z = pos.z +this.raio * Math.cos(this.angulo);
-    this.camera.position.y = pos.y +this.altura;
+    const r = this.raio[this.modo]
+    const a = this.altura[this.modo]
+
+    this.camera.position.x = pos.x + r * Math.sin(this.angulo);
+    this.camera.position.z = pos.z + r * Math.cos(this.angulo);
+    this.camera.position.y = pos.y + a;
 
     // camera olha para o personagem
     this.camera.lookAt(pos.x, pos.y, pos.z);
@@ -122,7 +126,7 @@ class Cenario {
 
       //modelo, x, y, z, escala
       this.adicionarModelo(arvore, -10, 2, -10, 3);
-      this.adicionarModelo(arvore, -8, 2, -13, 1);
+      this.adicionarModelo(arvore, -8, 1, -13, 1);
       this.adicionarModelo(arvore, -15, 2, -10, 2);
       this.adicionarModelo(arvore, 10, 2, -20, 3);
       this.adicionarModelo(arvore, 15, 2, -10, 3);
@@ -182,7 +186,7 @@ class Cenario {
   criarParede(){
         const loader = new GLTFLoader();
 
-    // https://poly.pizza/m/pNsfJzhXiD
+    // https://poly.pizza/m/5d80r2XX3O
     loader.load("./Wall Towers Door Seco by Quaternius - 5d80r2XX3O.glb", (gltf) => {
       const parede = gltf.scene;
 
@@ -255,6 +259,10 @@ class Jogo {
             this.camera.orbitarDireita();
         }
 
+        if (this.controles.teclas['KeyC']) {
+            this.camera.modo = (this.camera.modo + 1) % 2;
+            this.controles.teclas['KeyC'] = false
+        }
 
 
 
