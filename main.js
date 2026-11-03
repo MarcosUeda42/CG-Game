@@ -1,6 +1,7 @@
 import * as THREE from 'three';
-import { FBXLoader } from 'three/addons/loaders/FBXLoader.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import Personagem from './personagem.js';
+import Inimigo from "./inimigo.js";
 
 class Controles {
     constructor() {
@@ -164,13 +165,13 @@ class Jogo {
         // inicializa o cenario
         this.cenario = new Cenario(this.scene);
 
-        // inicializa o personagem
-        this.personagem = new Personagem("./personagem.fbx", this.scene);
-
-        this.inimigo1 = new Inimigo("./inimigo.fbx", this.scene, 0, 0, 5, Math.PI); // rotação em 180
-
         // inicializa os controles
         this.controles = new Controles();
+
+        // inicializa o personagem
+        this.personagem = new Personagem("./personagem/model.glb", this.scene, this.controles);
+
+        this.inimigo1 = new Inimigo("./inimigo.fbx", this.scene, 0, 0, 5, Math.PI); // rotação em 180
     }
     
     iniciar() {
@@ -184,14 +185,15 @@ class Jogo {
         requestAnimationFrame(this.animar);
 
         // animação da câmera
+        /*
         if (this.controles.teclas['ArrowLeft']) {
             this.camera.orbitarEsquerda();
         }
-        if (this.controles.teclas['ArrowRight']) {
+        else if (this.controles.teclas['ArrowRight']) {
             this.camera.orbitarDireita();
         }
-
-        // animação do personagem
+        */
+        
         this.personagem.atualizar();
 
         // animação do inimigo
@@ -199,99 +201,6 @@ class Jogo {
 
         this.renderer.draw(this.scene,this.camera.camera);
     };
-}
-
-// Carrega o modelo FBX (Mixamo)
-class Personagem {
-    constructor(url, scene){
-        this.personagem = null;
-        this.url = url
-        this.loader = new FBXLoader()
-        this.mixer = null;
-        this.scene = scene;
-        // clock para medir o tempo entre atualização da animação
-        this.clock = new THREE.Clock();
-    }
-
-    carregar(){
-        this.loader.load(this.url,
-        
-            (personagem) => {
-                this.personagem = personagem;
-                personagem.scale.setScalar(0.01);
-                personagem.position.set(0, 0, 0);
-                this.scene.add(personagem);
-
-                this.mixer = new THREE.AnimationMixer(personagem);
-                const animacao = personagem.animations[0] 
-                        
-                if (animacao) {
-                    this.mixer.clipAction(animacao).play();
-                }
-
-            },
-            () => {
-                console.log("Carregando");
-            },
-            (erro) => {
-                console.error('Erro ao carregar personagem:', erro);
-            }
-        )
-    }
-
-    // atualiza com base no clock
-    atualizar() {
-        if (this.mixer) {
-            this.mixer.update(this.clock.getDelta());
-        }
-    }
-}
-
-    class Inimigo {
-        constructor(url, scene, x, y, z, rotacaoY) {
-            this.inimigo = null;
-            this.url = url;
-            this.loader = new FBXLoader();
-            this.mixer = null;
-            this.scene = scene;
-            this.clock = new THREE.Clock();
-
-            this.posX = x;
-            this.posY = y;
-            this.posZ = z;
-            this.rotacaoY = rotacaoY;
-        }
-        
-        carregar() {
-            this.loader.load(this.url,
-                (inimigo) => {
-                    this.inimigo = inimigo;
-                    inimigo.scale.setScalar(0.01);
-                    inimigo.position.set(this.posX, this.posY, this.posZ);
-                    inimigo.rotation.y = this.rotacaoY;
-                    this.scene.add(inimigo);
-
-                    this.mixer = new THREE.AnimationMixer(inimigo);
-                    const animacao = inimigo.animations[0];
-
-                    if (animacao) {
-                        this.mixer.clipAction(animacao).play();
-                    }
-                },
-                () => {
-                    console.log("Carregando inimigo");
-                },
-                (erro) => {
-                    console.error('Erro ao carregar inimigo:', erro);
-                }
-            );
-        }
-
-        atualizar() {
-        if (this.mixer) {
-            this.mixer.update(this.clock.getDelta());
-        }
-    }
 }
 
 const jogo = new Jogo();
