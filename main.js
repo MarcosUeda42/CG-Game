@@ -269,7 +269,7 @@ class Jogo {
     this.personagem.atualizar();
 
     // animação do inimigo
-    this.inimigo1.atualizar();
+    this.inimigo1.atualizar(this.personagem.personagem);
 
     const position = this.personagem.position();
 
