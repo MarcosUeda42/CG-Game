@@ -14,6 +14,7 @@ export default class Personagem {
     this.clock = new THREE.Clock();
     this.velocidade = 3;
     this.velocidadeGiro = 10;
+    this.hitbox = new THREE.Box3();
     this.direcoes = {
       KeyW: new THREE.Vector3(0, 0, -1),
       KeyS: new THREE.Vector3(0, 0, 1),
@@ -30,6 +31,12 @@ export default class Personagem {
         this.personagem.scale.setScalar(0.01); // ajuste se necessário (ex.: 0.01 para FBX)
         this.personagem.position.set(1, 1, 1);
         this.scene.add(this.personagem);
+        
+        this.hitbox = new THREE.Box3();
+        this.personagem.updateMatrixWorld(true);
+
+        this.helper = new THREE.Box3Helper(this.hitbox, 0xff0000);
+        this.scene.add(this.helper);
 
         this.mixer = new THREE.AnimationMixer(this.personagem);
 
@@ -72,28 +79,29 @@ export default class Personagem {
   atualizar() {
     const delta = this.clock.getDelta();
     if (this.mixer) this.mixer.update(delta);
-
+    
     if (!this.personagem) return;
-
+    
     const direcao = new THREE.Vector3();
     for (const tecla in this.direcoes)
       if (this.controles.teclas[tecla]) direcao.add(this.direcoes[tecla]);
-
+    
     if (direcao.lengthSq() > 0) {
       const passo = this.velocidade * delta;
       direcao.normalize();
       this.personagem.position.addScaledVector(direcao, passo);
       const alvo = Math.atan2(direcao.x, direcao.z);
-
+      
       let diferenca = alvo - this.personagem.rotation.y;
       diferenca = Math.atan2(Math.sin(diferenca), Math.cos(diferenca));
-
+      
       // tirei do cláudio
       const fator = 1 - Math.exp(-this.velocidadeGiro * delta);
       this.personagem.rotation.y += diferenca * fator;
-
+      
       this.mudarAnimacao("Walk");
     } else this.mudarAnimacao("Idle");
+    this.hitbox = this.hitbox.setFromObject(this.personagem);
   }
   
   position(){

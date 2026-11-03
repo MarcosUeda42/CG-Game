@@ -69,7 +69,7 @@ class Cenario {
 
   criarTerreno() {
     // define uma geometria plana e o material
-    const geometria = new THREE.PlaneGeometry(50, 50);
+    const geometria = new THREE.PlaneGeometry(100, 100);
     const material = new THREE.MeshStandardMaterial({
       color: 0x008000,
       side: THREE.DoubleSide,
@@ -83,7 +83,7 @@ class Cenario {
   }
 
   criarIluminacao() {
-    const luzAmbiente = new THREE.AmbientLight(0xffffff, 0.2);
+    const luzAmbiente = new THREE.AmbientLight(0xffffff, 0.1);
 
     this.scene.add(luzAmbiente);
   }
@@ -106,10 +106,10 @@ class Cenario {
       const montanha = gltf.scene;
 
       // modelo, x, y, z, escala, rotação Y
-      this.adicionarModelo(montanha, 0, 0, -25, 100);
-      this.adicionarModelo(montanha, -20, -10, 0, 200);
-      this.adicionarModelo(montanha, 0, -5, 30, 150);
-      this.adicionarModelo(montanha, 30, -2, -5, 150, -Math.PI);
+      this.adicionarModelo(montanha, 0, 0, -45, 100);
+      this.adicionarModelo(montanha, -30, -10, 0, 200);
+      this.adicionarModelo(montanha, 0, -5, 50, 150);
+      this.adicionarModelo(montanha, 50, -2, -5, 150, -Math.PI);
     });
   }
 
@@ -164,7 +164,7 @@ class Cenario {
   criarGrama(){
       const loader = new GLTFLoader();
 
-    // https://poly.pizza/m/pNsfJzhXiD
+    // https://poly.pizza/m/vUJjrRsFp4
     loader.load("./Grass by Quaternius - vUJjrRsFp4.glb", (gltf) => {
       const grama = gltf.scene;
 
@@ -179,6 +179,22 @@ class Cenario {
     });
   }
 
+  criarParede(){
+        const loader = new GLTFLoader();
+
+    // https://poly.pizza/m/pNsfJzhXiD
+    loader.load("./Wall Towers Door Seco by Quaternius - 5d80r2XX3O.glb", (gltf) => {
+      const parede = gltf.scene;
+
+      this.adicionarModelo(parede, 0, 0, -25, 25);
+      this.adicionarModelo(parede, 0, 0, 25, 25);
+      this.adicionarModelo(parede, 25, 0, 0, 25, -Math.PI/2);
+      this.adicionarModelo(parede, -25, 0, 0, 25, -Math.PI/2);
+
+
+    });
+  }
+
   renderizar() {
     this.criarTerreno();
     this.criarIluminacao();
@@ -186,6 +202,7 @@ class Cenario {
     this.criarArvores();
     this.criarTochas();
     this.criarGrama();
+    this.criarParede();
   }
 }
 
@@ -237,6 +254,8 @@ class Jogo {
         else if (this.controles.teclas['KeyE']) {
             this.camera.orbitarDireita();
         }
+
+
 
 
     this.personagem.atualizar();
