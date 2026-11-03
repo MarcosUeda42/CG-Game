@@ -34,17 +34,17 @@ class Camera {
       0.1,
       1000,
     );
-    this.angulo = 0; 
+    this.angulo = 0;
     this.raio = [14, 10];
-    this.altura = [8, 4];
+    this.altura = [30, 4];
 
     this.modo = 0;
     //this.atualizarPosicao();
   }
 
-  atualizarPosicao(pos) { 
-    const r = this.raio[this.modo]
-    const a = this.altura[this.modo]
+  atualizarPosicao(pos) {
+    const r = this.raio[this.modo];
+    const a = this.altura[this.modo];
 
     this.camera.position.x = pos.x + r * Math.sin(this.angulo);
     this.camera.position.z = pos.z + r * Math.cos(this.angulo);
@@ -69,6 +69,7 @@ class Camera {
 class Cenario {
   constructor(scene) {
     this.scene = scene;
+    this.hitboxesParedes = [];
   }
 
   criarTerreno() {
@@ -100,6 +101,8 @@ class Cenario {
     clone.rotation.y = rotacaoY;
 
     this.scene.add(clone);
+
+    return clone;
   }
 
   criarMontanha() {
@@ -147,9 +150,9 @@ class Cenario {
     luzTocha.position.set(x, y + 2.5, z);
 
     this.scene.add(luzTocha);
-}
+  }
 
-  criarTochas(){
+  criarTochas() {
     const loader = new GLTFLoader();
 
     // https://poly.pizza/m/pNsfJzhXiD
@@ -161,42 +164,54 @@ class Cenario {
       this.adicionarTocha(tocha, -7, 0, 9, 0.75);
       this.adicionarTocha(tocha, 6, 0, -6, 0.75);
       this.adicionarTocha(tocha, 4, 0, 8, 0.75);
-
     });
   }
 
-  criarGrama(){
-      const loader = new GLTFLoader();
+  criarGrama() {
+    const loader = new GLTFLoader();
 
     // https://poly.pizza/m/vUJjrRsFp4
     loader.load("./Grass by Quaternius - vUJjrRsFp4.glb", (gltf) => {
       const grama = gltf.scene;
 
-    for (let i = 0; i < 50; i++) {
+      for (let i = 0; i < 50; i++) {
         const x = Math.random() * 50 - 25;
         const z = Math.random() * 50 - 25;
         const escala = 0.8 + Math.random() * 0.7;
 
         this.adicionarModelo(grama, x, 0, z, escala);
-    }
-
+      }
     });
   }
 
-  criarParede(){
-        const loader = new GLTFLoader();
+  criarParede() {
+    const loader = new GLTFLoader();
 
     // https://poly.pizza/m/5d80r2XX3O
-    loader.load("./Wall Towers Door Seco by Quaternius - 5d80r2XX3O.glb", (gltf) => {
-      const parede = gltf.scene;
+    loader.load(
+      "./Wall Towers Door Seco by Quaternius - 5d80r2XX3O.glb",
+      (gltf) => {
+        const parede = gltf.scene;
 
-      this.adicionarModelo(parede, 0, 0, -25, 25);
-      this.adicionarModelo(parede, 0, 0, 25, 25);
-      this.adicionarModelo(parede, 25, 0, 0, 25, -Math.PI/2);
-      this.adicionarModelo(parede, -25, 0, 0, 25, -Math.PI/2);
+        const paredes = [
+          this.adicionarModelo(parede, 0, 0, -25, 25),
+          this.adicionarModelo(parede, 0, 0, 25, 25),
+          this.adicionarModelo(parede, 25, 0, 0, 25, -Math.PI / 2),
+          this.adicionarModelo(parede, -25, 0, 0, 25, -Math.PI / 2),
+        ];
 
+        paredes.forEach((obj) => {
+          obj.updateMatrixWorld(true);
 
-    });
+          const hitbox = new THREE.Box3().setFromObject(obj);
+
+          this.hitboxesParedes.push(hitbox);
+          console.log("Hitbox:", hitbox);
+          const helper = new THREE.Box3Helper(hitbox, 0x00ff00);
+          this.scene.add(helper);
+        });
+      },
+    );
   }
 
   renderizar() {
@@ -234,7 +249,7 @@ class Jogo {
       "./personagem/model.glb",
       this.scene,
       this.controles,
-      this.camera.camera
+      this.camera.camera,
     );
 
     this.inimigo1 = new Inimigo("./inimigo.fbx", this.scene, 0, 0, 5, Math.PI); // rotação em 180
@@ -252,19 +267,16 @@ class Jogo {
 
     // animação da câmera
 
-        if (this.controles.teclas['KeyQ']) {
-            this.camera.orbitarEsquerda();
-        }
-        else if (this.controles.teclas['KeyE']) {
-            this.camera.orbitarDireita();
-        }
+    if (this.controles.teclas["KeyQ"]) {
+      this.camera.orbitarEsquerda();
+    } else if (this.controles.teclas["KeyE"]) {
+      this.camera.orbitarDireita();
+    }
 
-        if (this.controles.teclas['KeyC']) {
-            this.camera.modo = (this.camera.modo + 1) % 2;
-            this.controles.teclas['KeyC'] = false
-        }
-
-
+    if (this.controles.teclas["KeyC"]) {
+      this.camera.modo = (this.camera.modo + 1) % 2;
+      this.controles.teclas["KeyC"] = false;
+    }
 
     this.personagem.atualizar();
 

@@ -24,24 +24,23 @@ export default class Inimigo {
     this.loader.load(
       this.url,
       (fbx) => {
-          this.inimigo = fbx;
-          this.inimigo.scale.setScalar(0.01);
-          this.inimigo.position.set(this.posX, this.posY, this.posZ);
+        this.inimigo = fbx;
+        this.inimigo.scale.setScalar(0.01);
+        this.inimigo.position.set(this.posX, this.posY, this.posZ);
 
-          this.scene.add(this.inimigo);
+        this.scene.add(this.inimigo);
 
-          this.hitbox = new THREE.Box3();
+        this.hitbox = new THREE.Box3();
 
-          this.helper = new THREE.Box3Helper(this.hitbox, 0xff0000);
-          this.scene.add(this.helper);
+        this.helper = new THREE.Box3Helper(this.hitbox, 0xff0000);
+        this.scene.add(this.helper);
 
+        this.mixer = new THREE.AnimationMixer(this.inimigo);
+        const animacao = fbx.animations[0];
 
-          this.mixer = new THREE.AnimationMixer(this.inimigo);
-          const animacao = fbx.animations[0];
-
-          if (animacao) {
-              this.mixer.clipAction(animacao).play();
-          }
+        if (animacao) {
+          this.mixer.clipAction(animacao).play();
+        }
       },
       () => {
         console.log("Carregando inimigo");
@@ -52,40 +51,37 @@ export default class Inimigo {
     );
   }
 
-atualizar(jogador) {
+  atualizar(jogador) {
     const delta = this.clock.getDelta();
 
     if (this.mixer) {
-        this.mixer.update(delta);
+      this.mixer.update(delta);
     }
 
     if (!this.inimigo || !jogador) return;
 
     const direcao = new THREE.Vector3();
 
-    direcao.subVectors(
-        jogador.position,
-        this.inimigo.position
-    );
+    direcao.subVectors(jogador.position, this.inimigo.position);
 
     direcao.y = 0;
 
     const distancia = direcao.length();
 
     if (distancia > this.distanciaMinima) {
-        direcao.normalize();
+      direcao.normalize();
 
-        this.inimigo.position.addScaledVector(direcao,this.velocidade * delta);
+      this.inimigo.position.addScaledVector(direcao, this.velocidade * delta);
 
-        const alvo = Math.atan2(direcao.x, direcao.z);
+      const alvo = Math.atan2(direcao.x, direcao.z);
 
-        let diferenca = alvo - this.inimigo.rotation.y;
+      let diferenca = alvo - this.inimigo.rotation.y;
 
-        diferenca = Math.atan2(Math.sin(diferenca),Math.cos(diferenca));
+      diferenca = Math.atan2(Math.sin(diferenca), Math.cos(diferenca));
 
-        this.inimigo.rotation.y += diferenca * 8 * delta;
+      this.inimigo.rotation.y += diferenca * 8 * delta;
     }
 
-        this.hitbox = this.hitbox.setFromObject(this.inimigo);
-}
+    this.hitbox = this.hitbox.setFromObject(this.inimigo);
+  }
 }
