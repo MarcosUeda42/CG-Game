@@ -34,20 +34,20 @@ class Camera {
       0.1,
       1000,
     );
-    this.angulo = Math.PI / 4;
+    this.angulo = 0; 
     this.raio = 14.14;
-    this.altura = 10;
+    this.altura = 13;
 
-    this.atualizarPosicao();
+    //this.atualizarPosicao();
   }
 
-  atualizarPosicao() {
-    this.camera.position.x = this.raio * Math.sin(this.angulo);
-    this.camera.position.z = this.raio * Math.cos(this.angulo);
-    this.camera.position.y = this.altura;
+  atualizarPosicao(pos) { 
+    this.camera.position.x = pos.x +this.raio * Math.sin(this.angulo);
+    this.camera.position.z = pos.z +this.raio * Math.cos(this.angulo);
+    this.camera.position.y = pos.y +this.altura;
 
-    // fixa camera no centro(talvez ajustar dps para seguir o personagem)
-    this.camera.lookAt(0, 0, 0);
+    // camera olha para o personagem
+    this.camera.lookAt(pos.x, pos.y, pos.z);
   }
 
   orbitarEsquerda(velocidade = 0.03) {
@@ -151,7 +151,7 @@ class Cenario {
 
 // Inicialização das classes e loop de animação
 // Personagem importado do MIXAMO Paladin W + Crouched Walking https://www.mixamo.com/#/
-// Inimigo Maynard + Magic Attack 01
+// Inimigo Maynard + Magic Attack 01 (não é mais usado)
 class Jogo {
   constructor() {
     // inicializa a cena
@@ -173,6 +173,7 @@ class Jogo {
       "./personagem/model.glb",
       this.scene,
       this.controles,
+      this.camera.camera
     );
 
     this.inimigo1 = new Inimigo("./inimigo.fbx", this.scene, 0, 0, 5, Math.PI); // rotação em 180
@@ -202,6 +203,10 @@ class Jogo {
 
     // animação do inimigo
     this.inimigo1.atualizar();
+
+    const position = this.personagem.position();
+
+    this.camera.atualizarPosicao(position);
 
     this.renderer.draw(this.scene, this.camera.camera);
   };
