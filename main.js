@@ -36,7 +36,7 @@ class Camera {
     );
     this.angulo = 0; 
     this.raio = 14.14;
-    this.altura = 13;
+    this.altura = 8;
 
     //this.atualizarPosicao();
   }
@@ -83,14 +83,9 @@ class Cenario {
   }
 
   criarIluminacao() {
-    const luzAmbiente = new THREE.AmbientLight(0xffffff, 1);
+    const luzAmbiente = new THREE.AmbientLight(0xffffff, 0.2);
 
     this.scene.add(luzAmbiente);
-
-    const luzPontual = new THREE.PointLight(0xffffff, 100);
-    luzPontual.position.set(0, 5, 0);
-
-    this.scene.add(luzPontual);
   }
 
   adicionarModelo(modelo, x, y, z, escala, rotacaoY = 0) {
@@ -141,11 +136,56 @@ class Cenario {
     });
   }
 
+  adicionarTocha(tocha, x, y, z) {
+    this.adicionarModelo(tocha, x, y, z, 0.75);
+
+    const luzTocha = new THREE.PointLight(0xff6600, 30);
+    luzTocha.position.set(x, y + 2.5, z);
+
+    this.scene.add(luzTocha);
+}
+
+  criarTochas(){
+    const loader = new GLTFLoader();
+
+    // https://poly.pizza/m/pNsfJzhXiD
+    loader.load("./Wooden Torch by Quaternius - pNsfJzhXiD.glb", (gltf) => {
+      const tocha = gltf.scene;
+
+      this.adicionarTocha(tocha, -18, 0, 3, 0.75);
+      this.adicionarTocha(tocha, -3, 0, -8, 0.75);
+      this.adicionarTocha(tocha, -7, 0, 9, 0.75);
+      this.adicionarTocha(tocha, 6, 0, -6, 0.75);
+      this.adicionarTocha(tocha, 4, 0, 8, 0.75);
+
+    });
+  }
+
+  criarGrama(){
+      const loader = new GLTFLoader();
+
+    // https://poly.pizza/m/pNsfJzhXiD
+    loader.load("./Grass by Quaternius - vUJjrRsFp4.glb", (gltf) => {
+      const grama = gltf.scene;
+
+    for (let i = 0; i < 50; i++) {
+        const x = Math.random() * 50 - 25;
+        const z = Math.random() * 50 - 25;
+        const escala = 0.8 + Math.random() * 0.7;
+
+        this.adicionarModelo(grama, x, 0, z, escala);
+    }
+
+    });
+  }
+
   renderizar() {
     this.criarTerreno();
     this.criarIluminacao();
     this.criarMontanha();
     this.criarArvores();
+    this.criarTochas();
+    this.criarGrama();
   }
 }
 
@@ -156,7 +196,7 @@ class Jogo {
   constructor() {
     // inicializa a cena
     this.scene = new THREE.Scene();
-    this.scene.background = new THREE.Color("skyblue");
+    this.scene.background = new THREE.Color("midnightblue");
 
     // inicializa a camera e renderizador
     this.camera = new Camera();
@@ -190,14 +230,14 @@ class Jogo {
     requestAnimationFrame(this.animar);
 
     // animação da câmera
-    /*
-        if (this.controles.teclas['ArrowLeft']) {
+
+        if (this.controles.teclas['KeyQ']) {
             this.camera.orbitarEsquerda();
         }
-        else if (this.controles.teclas['ArrowRight']) {
+        else if (this.controles.teclas['KeyE']) {
             this.camera.orbitarDireita();
         }
-        */
+
 
     this.personagem.atualizar();
 
