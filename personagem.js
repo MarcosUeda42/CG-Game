@@ -2,10 +2,11 @@ import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 
 export default class Personagem {
-  constructor(url, scene, controles) {
+  constructor(url, scene, controles, cenario) {
     this.personagem = null;
     this.url = url;
     this.controles = controles;
+    this.cenario = cenario,
     this.loader = new GLTFLoader();
     this.mixer = null;
     this.scene = scene;
@@ -81,7 +82,9 @@ export default class Personagem {
     if (this.mixer) this.mixer.update(delta);
     
     if (!this.personagem) return;
-    
+
+    const posicaoAnterior = this.personagem.position.clone();
+
     const direcao = new THREE.Vector3();
     for (const tecla in this.direcoes)
       if (this.controles.teclas[tecla]) direcao.add(this.direcoes[tecla]);
@@ -102,6 +105,19 @@ export default class Personagem {
       this.mudarAnimacao("Walk");
     } else this.mudarAnimacao("Idle");
     this.hitbox = this.hitbox.setFromObject(this.personagem);
+
+    for (const parede of this.cenario.hitboxesParedes) {
+      if (this.hitbox.intersectsBox(parede)) {
+
+      this.personagem.position.copy(posicaoAnterior);
+
+      this.personagem.updateMatrixWorld(true);
+      this.hitbox.setFromObject(this.personagem);
+
+      break;
+    }
+  }
+
   }
   
   position(){
