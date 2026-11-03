@@ -203,6 +203,9 @@ class Jogo {
     // animação do inimigo
     this.inimigo1.atualizar();
 
+    const position = this.personagem.position();
+    this.camera.camera.lookAt(position.x, position.y, position.z);
+
     this.renderer.draw(this.scene, this.camera.camera);
   };
 }

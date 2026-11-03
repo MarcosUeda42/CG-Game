@@ -95,4 +95,9 @@ export default class Personagem {
       this.mudarAnimacao("Walk");
     } else this.mudarAnimacao("Idle");
   }
+  
+  position(){
+    if (this.personagem) return this.personagem.position;
+    return new THREE.Vector3(0, 0, 0);
+  }
 }
