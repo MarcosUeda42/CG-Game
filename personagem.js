@@ -98,7 +98,6 @@ export default class Personagem {
       let diferenca = alvo - this.personagem.rotation.y;
       diferenca = Math.atan2(Math.sin(diferenca), Math.cos(diferenca));
       
-      // tirei do cláudio
       const fator = 1 - Math.exp(-this.velocidadeGiro * delta);
       this.personagem.rotation.y += diferenca * fator;
       
