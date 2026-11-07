@@ -73,10 +73,15 @@ class Cenario {
   }
 
   criarTerreno() {
+    const textura = new THREE.TextureLoader().load("./texturas/Grass 11.png");
+    textura.colorSpace = THREE.SRGBColorSpace;
+    textura.wrapS = textura.wrapT = THREE.RepeatWrapping;
+    textura.repeat.set(20, 20); // repete 20x em cada direção
     // define uma geometria plana e o material
     const geometria = new THREE.PlaneGeometry(100, 100);
     const material = new THREE.MeshStandardMaterial({
-      color: 0x008000,
+      //color: 0x008000,
+      map: textura,
       side: THREE.DoubleSide,
     });
 
@@ -107,6 +112,7 @@ class Cenario {
 
   criarMontanha() {
     const loader = new GLTFLoader();
+    const texLoader = new THREE.TextureLoader();
 
     // https://poly.pizza/m/OQvi8PIZ40
     loader.load("./Rocks by Quaternius - OQvi8PIZ40.glb", (gltf) => {
@@ -122,10 +128,29 @@ class Cenario {
 
   criarArvores() {
     const loader = new GLTFLoader();
+    const texLoader = new THREE.TextureLoader();
+
+    const texFolhas = texLoader.load("./texturas/foliage.png");
+    const texTronco = texLoader.load("./texturas/tree_bark.png");
+    texFolhas.colorSpace = THREE.SRGBColorSpace;
+    texTronco.colorSpace = THREE.SRGBColorSpace;
 
     // https://poly.pizza/m/s6yZuyU2y5
     loader.load("./Tree by MaverickFX - s6yZuyU2y5.glb", (gltf) => {
       const arvore = gltf.scene;
+
+      arvore.traverse((obj) => {
+        if (!obj.isMesh) return;
+        if (obj.material.name === "TREE") {
+          obj.material.color.set(0xffffff);
+          obj.material.map = texFolhas;
+          obj.material.needsUpdate = true;
+        } else if (obj.material.name === "BRANCH") {
+          obj.material.color.set(0xffffff);
+          obj.material.map = texTronco;
+          obj.material.needsUpdate = true;
+        }
+      });
 
       //modelo, x, y, z, escala
       this.adicionarModelo(arvore, -10, 2, -10, 3);
