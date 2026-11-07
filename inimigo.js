@@ -65,15 +65,15 @@ export default class Inimigo {
       },
     );
   }
-  atualizar(jogador) {
+  atualizar(target) {
     const delta = this.clock.getDelta();
 
     if (this.mixer) this.mixer.update(delta);
-    if (!this.inimigo || !jogador) return;
+    if (!this.inimigo || !target) return;
 
     const direcao = new THREE.Vector3();
 
-    direcao.subVectors(jogador.position, this.inimigo.position);
+    direcao.subVectors(target, this.inimigo.position);
 
     direcao.y = 0;
 

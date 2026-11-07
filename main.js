@@ -260,11 +260,9 @@ class Jogo {
     this.personagem.atualizar();
 
     // animação do inimigo
-    this.inimigo1.atualizar(this.personagem.personagem);
+    this.inimigo1.atualizar(this.personagem.getPosition());
 
-    const position = this.personagem.position();
-
-    this.camera.atualizarPosicao(position);
+    this.camera.atualizarPosicao(this.personagem.getPosition());
 
     this.renderer.draw(this.scene, this.camera.camera);
   };
