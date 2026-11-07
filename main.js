@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import Personagem from "./personagem.js";
+import Camera from "./camera.js";
 import Inimigo from "./inimigo.js";
 
 class Controles {
@@ -22,46 +23,6 @@ class Renderer {
   //
   draw(scene, camera) {
     this.renderer.render(scene, camera);
-  }
-}
-
-// classe da camera define perspectiva e posição
-class Camera {
-  constructor() {
-    this.camera = new THREE.PerspectiveCamera(
-      45,
-      window.innerWidth / window.innerHeight,
-      0.1,
-      1000,
-    );
-    this.angulo = 0;
-    this.raio = [14, 10];
-    this.altura = [30, 4];
-
-    this.modo = 0;
-    //this.atualizarPosicao();
-  }
-
-  atualizarPosicao(pos) {
-    const r = this.raio[this.modo];
-    const a = this.altura[this.modo];
-
-    this.camera.position.x = pos.x + r * Math.sin(this.angulo);
-    this.camera.position.z = pos.z + r * Math.cos(this.angulo);
-    this.camera.position.y = pos.y + a;
-
-    // camera olha para o personagem
-    this.camera.lookAt(pos.x, pos.y, pos.z);
-  }
-
-  orbitarEsquerda(velocidade = 0.03) {
-    this.angulo -= velocidade;
-    this.atualizarPosicao();
-  }
-
-  orbitarDireita(velocidade = 0.03) {
-    this.angulo += velocidade;
-    this.atualizarPosicao();
   }
 }
 
@@ -115,7 +76,7 @@ class Cenario {
     const texLoader = new THREE.TextureLoader();
 
     // https://poly.pizza/m/OQvi8PIZ40
-    loader.load("./Rocks by Quaternius - OQvi8PIZ40.glb", (gltf) => {
+    loader.load("./objetos/Rocks by Quaternius - OQvi8PIZ40.glb", (gltf) => {
       const montanha = gltf.scene;
 
       // modelo, x, y, z, escala, rotação Y
@@ -136,7 +97,7 @@ class Cenario {
     texTronco.colorSpace = THREE.SRGBColorSpace;
 
     // https://poly.pizza/m/s6yZuyU2y5
-    loader.load("./Tree by MaverickFX - s6yZuyU2y5.glb", (gltf) => {
+    loader.load("./objetos/Tree by MaverickFX - s6yZuyU2y5.glb", (gltf) => {
       const arvore = gltf.scene;
 
       arvore.traverse((obj) => {
@@ -181,7 +142,7 @@ class Cenario {
     const loader = new GLTFLoader();
 
     // https://poly.pizza/m/pNsfJzhXiD
-    loader.load("./Wooden Torch by Quaternius - pNsfJzhXiD.glb", (gltf) => {
+    loader.load("./objetos/Wooden Torch by Quaternius - pNsfJzhXiD.glb", (gltf) => {
       const tocha = gltf.scene;
 
       this.adicionarTocha(tocha, -18, 0, 3, 0.75);
@@ -196,7 +157,7 @@ class Cenario {
     const loader = new GLTFLoader();
 
     // https://poly.pizza/m/vUJjrRsFp4
-    loader.load("./Grass by Quaternius - vUJjrRsFp4.glb", (gltf) => {
+    loader.load("./objetos/Grass by Quaternius - vUJjrRsFp4.glb", (gltf) => {
       const grama = gltf.scene;
 
       for (let i = 0; i < 50; i++) {
@@ -214,7 +175,7 @@ class Cenario {
 
     // https://poly.pizza/m/5d80r2XX3O
     loader.load(
-      "./Wall Towers Door Seco by Quaternius - 5d80r2XX3O.glb",
+      "./objetos/Wall Towers Door Seco by Quaternius - 5d80r2XX3O.glb",
       (gltf) => {
         const parede = gltf.scene;
 
