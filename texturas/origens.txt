@@ -1,2 +1,8 @@
 madeira: https://opengameart.org/content/tree-bark-texture
 folhas: https://opengameart.org/content/green-foliage-texture
+grama: https://opengameart.org/content/blended-textures-of-dirt-and-grass
+pedra (chão): https://opengameart.org/content/paving-jagged-stone-seamless-texture-with-normalmap-1
+pedra (parede, clara): https://opengameart.org/content/gray-stone-mountaincliff
+pedra (parede, outra): https://opengameart.org/content/fantasy-stone-texture1-1-17dseamless
+madeira (parede): https://opengameart.org/content/wood-planks
+parede (main?): 
