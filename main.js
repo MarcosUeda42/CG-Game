@@ -252,7 +252,7 @@ class Jogo {
       this.cenario
     );
 
-    this.inimigo1 = new Inimigo("./inimigo.fbx", this.scene, 0, 0, 5, Math.PI); // rotação em 180
+    this.inimigo1 = new Inimigo("./inimigo/model.glb", this.scene, 1, 1.2, 5, Math.PI); // rotação em 180
   }
 
   iniciar() {

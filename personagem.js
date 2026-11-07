@@ -72,11 +72,9 @@ export default class Personagem {
     nextAction.setEffectiveWeight(1);
     nextAction.play();
 
-    if (this.currentAction)
-      this.currentAction.crossFadeTo(nextAction, duracao, true);
+    if (this.currentAction) this.currentAction.crossFadeTo(nextAction, duracao, true);
     this.currentAction = nextAction;
   }
-
   atualizar() {
     const delta = this.clock.getDelta();
     if (this.mixer) this.mixer.update(delta);
@@ -107,16 +105,12 @@ export default class Personagem {
 
     for (const parede of this.cenario.hitboxesParedes) {
       if (this.hitbox.intersectsBox(parede)) {
-
-      this.personagem.position.copy(posicaoAnterior);
-
-      this.personagem.updateMatrixWorld(true);
-      this.hitbox.setFromObject(this.personagem);
-
-      break;
+        this.personagem.position.copy(posicaoAnterior);
+        this.personagem.updateMatrixWorld(true);
+        this.hitbox.setFromObject(this.personagem);
+        break;
+      }
     }
-  }
-
   }
   
   position(){
