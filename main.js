@@ -3,14 +3,7 @@ import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import Personagem from "./personagem.js";
 import Camera from "./camera.js";
 import Inimigo from "./inimigo.js";
-
-class Controles {
-  constructor() {
-    this.teclas = {};
-    window.addEventListener("keydown", (e) => (this.teclas[e.code] = true));
-    window.addEventListener("keyup", (e) => (this.teclas[e.code] = false));
-  }
-}
+import Controles from "./controles.js";
 
 // classe do Renderizador (WebGL)
 class Renderer {
@@ -19,10 +12,11 @@ class Renderer {
     this.renderer.setSize(window.innerWidth, window.innerHeight);
     document.body.appendChild(this.renderer.domElement);
   }
-
-  //
   draw(scene, camera) {
     this.renderer.render(scene, camera);
+  }
+  getDOMElement() {
+    return this.renderer.domElement;
   }
 }
 
@@ -73,7 +67,6 @@ class Cenario {
 
   criarMontanha() {
     const loader = new GLTFLoader();
-    const texLoader = new THREE.TextureLoader();
 
     // https://poly.pizza/m/OQvi8PIZ40
     loader.load("./objetos/Rocks by Quaternius - OQvi8PIZ40.glb", (gltf) => {
@@ -228,7 +221,7 @@ class Jogo {
     this.cenario = new Cenario(this.scene);
 
     // inicializa os controles
-    this.controles = new Controles();
+    this.controles = new Controles(this.renderer.getDOMElement());
 
     // inicializa o personagem
     this.personagem = new Personagem(
