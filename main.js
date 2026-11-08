@@ -123,6 +123,15 @@ class Cenario {
       this.adicionarModelo(montanha, -30, -10, 0, 200);
       this.adicionarModelo(montanha, 0, -5, 50, 150);
       this.adicionarModelo(montanha, 50, -2, -5, 150, -Math.PI);
+
+      for (let i = 0; i < 50; i++) {
+        const x = Math.random() * 50 - 25;
+        const z = Math.random() * 50 - 25;
+        const escala = 0.8 + Math.random() * 0.7;
+
+
+        this.adicionarModelo(montanha, x, 0, z, escala);
+      }
     });
   }
 
@@ -209,35 +218,64 @@ class Cenario {
     });
   }
 
-  criarParede() {
-    const loader = new GLTFLoader();
+criarParede() {
+    const texLoader = new THREE.TextureLoader();
 
-    // https://poly.pizza/m/5d80r2XX3O
-    loader.load(
-      "./Wall Towers Door Seco by Quaternius - 5d80r2XX3O.glb",
-      (gltf) => {
-        const parede = gltf.scene;
+    const texPedra = texLoader.load("./texturas/stone.png");
+    const texTronco = texLoader.load("./texturas/planks.png");
+    texPedra.colorSpace = THREE.SRGBColorSpace;
+    texPedra.wrapS = THREE.RepeatWrapping;
+    texPedra.wrapT = THREE.RepeatWrapping;
+    texPedra.repeat.set(4, 2);
 
-        const paredes = [
-          this.adicionarModelo(parede, 0, 0, -25, 25),
-          this.adicionarModelo(parede, 0, 0, 25, 25),
-          this.adicionarModelo(parede, 25, 0, 0, 25, -Math.PI / 2),
-          this.adicionarModelo(parede, -25, 0, 0, 25, -Math.PI / 2),
-        ];
+    texTronco.colorSpace = THREE.SRGBColorSpace;
+    texTronco.wrapS = THREE.RepeatWrapping;
+    texTronco.wrapT = THREE.RepeatWrapping;
+    texTronco.repeat.set(2, 2);
 
-        paredes.forEach((obj) => {
-          obj.updateMatrixWorld(true);
+    const geometria = new THREE.BoxGeometry(2, 0.5, 0.1);
 
-          const hitbox = new THREE.Box3().setFromObject(obj);
+    const material = new THREE.MeshStandardMaterial({
+        map: texPedra
+    });
 
-          this.hitboxesParedes.push(hitbox);
-          console.log("Hitbox:", hitbox);
-          const helper = new THREE.Box3Helper(hitbox, 0x00ff00);
-          this.scene.add(helper);
-        });
-      },
+    const parede = new THREE.Mesh(geometria, material);
+
+    const geometriaPilar = new THREE.BoxGeometry(0.2, 0.6, 0.2);
+
+    const materialPilar = new THREE.MeshStandardMaterial({
+        map: texTronco
+    });
+    const pilar = new THREE.Mesh(
+        geometriaPilar,
+        materialPilar
     );
-  }
+
+    pilar.position.set(-0.4, 0, 0);
+    const pilar_2 = pilar.clone()
+    pilar_2.position.set(0.4, 0, 0)
+
+    parede.add(pilar);
+    parede.add(pilar_2);
+
+    const paredes = [
+        this.adicionarModelo(parede, 0, 0, -25, 25),
+        this.adicionarModelo(parede, 0, 0, 25, 25),
+        this.adicionarModelo(parede, 25, 0, 0, 25, -Math.PI / 2),
+        this.adicionarModelo(parede, -25, 0, 0, 25, -Math.PI / 2),
+    ];
+
+    paredes.forEach((obj) => {
+        obj.updateMatrixWorld(true);
+
+        const hitbox = new THREE.Box3().setFromObject(obj);
+
+        this.hitboxesParedes.push(hitbox);
+
+        const helper = new THREE.Box3Helper(hitbox, 0x00ff00);
+        this.scene.add(helper);
+    });
+}
 
   renderizar() {
     this.criarTerreno();
