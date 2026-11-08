@@ -247,9 +247,9 @@ class Jogo {
     // animação da câmera
 
     if (this.controles.teclas["KeyQ"]) {
-      this.camera.orbitarEsquerda();
+      this.camera.orbitarEsquerda(this.personagem.getPosition());
     } else if (this.controles.teclas["KeyE"]) {
-      this.camera.orbitarDireita();
+      this.camera.orbitarDireita(this.personagem.getPosition());
     }
 
     if (this.controles.teclas["KeyC"]) {
