@@ -48,9 +48,12 @@ class Cenario {
   }
 
   criarIluminacao() {
-    const luzAmbiente = new THREE.AmbientLight(0xffffff, 0.1);
-
+    const luzAmbiente = new THREE.AmbientLight(0xffffff, 0.05);
     this.scene.add(luzAmbiente);
+
+    const lua = new THREE.DirectionalLight(0x9bbcff, 1);
+    lua.position.set(150, 100, 100);
+    this.scene.add(lua);
   }
 
   adicionarModelo(modelo, x, y, z, escala, rotacaoY = 0) {
