@@ -244,7 +244,6 @@ export default class Personagem {
         this.pivot.position.copy(posicaoAnterior);
         this.pivot.updateMatrixWorld(true);
         this.atualizarHitbox();
-        console.log("bateu")
         break;
       }
     }
