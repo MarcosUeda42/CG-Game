@@ -54,6 +54,10 @@ export default class Personagem {
       KeyD: new THREE.Vector3(1, 0, 0),
     };
     this.proximoSolicitado = false;
+
+    this.correndo = false;
+    this.fatorCorrida = 1;
+
     this.resetarAtaque();
   }
   carregar() {
@@ -65,9 +69,9 @@ export default class Personagem {
 
         this.personagem = gltf.scene;
         this.personagem.scale.setScalar(0.01);
+        this.personagem.position.set(0, 1, 0.01);
 
-        this.pivot.position.set(1, 1, 1);
-        this.personagem.position.set(0, 1, -1)
+        this.pivot.position.set(1, 0.3, 1);
         this.pivot.add(this.personagem);
         
         this.quadril = this.personagem.getObjectByName("mixamorigHips");
@@ -211,6 +215,7 @@ export default class Personagem {
     if (this.mixer) this.mixer.update(delta);
     
     if (!this.personagem) return;
+    this.correndo = this.controles.getKeyStatus("Space");
     
     this.atualizarHitbox();
     this.acompanharQuadril(this.passoMelee !== -1);
@@ -224,7 +229,10 @@ export default class Personagem {
       if (this.controles.teclas[tecla]) direcao.add(this.direcoes[tecla]);
     
     if (direcao.lengthSq() > 0) {
-      const passo = this.velocidade * delta;
+      if(this.correndo) this.fatorCorrida = 1.5;
+      else this.fatorCorrida = 1;
+
+      const passo = this.velocidade * this.fatorCorrida * delta;
       direcao.normalize();
       this.pivot.position.addScaledVector(direcao, passo);
       const alvo = Math.atan2(direcao.x, direcao.z);
@@ -235,7 +243,9 @@ export default class Personagem {
       const fator = 1 - Math.exp(-this.velocidadeGiro * delta);
       this.pivot.rotation.y += diferenca * fator;
       
-      this.mudarAnimacao("Walk");
+      this.mudarAnimacao(
+        this.correndo ? "Run" : "Walk"
+      );
     } else this.mudarAnimacao("Idle");
   }
   colision() {
