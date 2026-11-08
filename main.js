@@ -1,15 +1,9 @@
 import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import Personagem from "./personagem.js";
+import Camera from "./camera.js";
 import Inimigo from "./inimigo.js";
-
-class Controles {
-  constructor() {
-    this.teclas = {};
-    window.addEventListener("keydown", (e) => (this.teclas[e.code] = true));
-    window.addEventListener("keyup", (e) => (this.teclas[e.code] = false));
-  }
-}
+import Controles from "./controles.js";
 
 // classe do Renderizador (WebGL)
 class Renderer {
@@ -18,50 +12,11 @@ class Renderer {
     this.renderer.setSize(window.innerWidth, window.innerHeight);
     document.body.appendChild(this.renderer.domElement);
   }
-
-  //
   draw(scene, camera) {
     this.renderer.render(scene, camera);
   }
-}
-
-// classe da camera define perspectiva e posição
-class Camera {
-  constructor() {
-    this.camera = new THREE.PerspectiveCamera(
-      45,
-      window.innerWidth / window.innerHeight,
-      0.1,
-      1000,
-    );
-    this.angulo = 0;
-    this.raio = [14, 10];
-    this.altura = [30, 4];
-
-    this.modo = 0;
-    //this.atualizarPosicao();
-  }
-
-  atualizarPosicao(pos) {
-    const r = this.raio[this.modo];
-    const a = this.altura[this.modo];
-
-    this.camera.position.x = pos.x + r * Math.sin(this.angulo);
-    this.camera.position.z = pos.z + r * Math.cos(this.angulo);
-    this.camera.position.y = pos.y + a;
-
-    // camera olha para o personagem
-    this.camera.lookAt(pos.x, pos.y, pos.z);
-  }
-
-  orbitarEsquerda(velocidade = 0.03) {
-    this.angulo -= velocidade;
-    this.atualizarPosicao();
-  }
-
-  orbitarDireita(velocidade = 0.03) {
-    this.angulo += velocidade;
-    this.atualizarPosicao();
+  getDOMElement() {
+    return this.renderer.domElement;
   }
 }
 
@@ -112,10 +67,9 @@ class Cenario {
 
   criarMontanha() {
     const loader = new GLTFLoader();
-    const texLoader = new THREE.TextureLoader();
 
     // https://poly.pizza/m/OQvi8PIZ40
-    loader.load("./Rocks by Quaternius - OQvi8PIZ40.glb", (gltf) => {
+    loader.load("./objetos/Rocks by Quaternius - OQvi8PIZ40.glb", (gltf) => {
       const montanha = gltf.scene;
 
       // modelo, x, y, z, escala, rotação Y
@@ -145,7 +99,7 @@ class Cenario {
     texTronco.colorSpace = THREE.SRGBColorSpace;
 
     // https://poly.pizza/m/s6yZuyU2y5
-    loader.load("./Tree by MaverickFX - s6yZuyU2y5.glb", (gltf) => {
+    loader.load("./objetos/Tree by MaverickFX - s6yZuyU2y5.glb", (gltf) => {
       const arvore = gltf.scene;
 
       arvore.traverse((obj) => {
@@ -190,7 +144,7 @@ class Cenario {
     const loader = new GLTFLoader();
 
     // https://poly.pizza/m/pNsfJzhXiD
-    loader.load("./Wooden Torch by Quaternius - pNsfJzhXiD.glb", (gltf) => {
+    loader.load("./objetos/Wooden Torch by Quaternius - pNsfJzhXiD.glb", (gltf) => {
       const tocha = gltf.scene;
 
       this.adicionarTocha(tocha, -18, 0, 3, 0.75);
@@ -205,7 +159,7 @@ class Cenario {
     const loader = new GLTFLoader();
 
     // https://poly.pizza/m/vUJjrRsFp4
-    loader.load("./Grass by Quaternius - vUJjrRsFp4.glb", (gltf) => {
+    loader.load("./objetos/Grass by Quaternius - vUJjrRsFp4.glb", (gltf) => {
       const grama = gltf.scene;
 
       for (let i = 0; i < 50; i++) {
@@ -223,38 +177,69 @@ criarParede() {
 
     const texPedra = texLoader.load("./texturas/stone.png");
     const texTronco = texLoader.load("./texturas/planks.png");
+    const texPedraEscura = texLoader.load("./texturas/darkstone.jpg");
     texPedra.colorSpace = THREE.SRGBColorSpace;
     texPedra.wrapS = THREE.RepeatWrapping;
     texPedra.wrapT = THREE.RepeatWrapping;
-    texPedra.repeat.set(4, 2);
+    texPedra.repeat.set(8, 2);
 
     texTronco.colorSpace = THREE.SRGBColorSpace;
     texTronco.wrapS = THREE.RepeatWrapping;
     texTronco.wrapT = THREE.RepeatWrapping;
     texTronco.repeat.set(2, 2);
+  
+    const texPisoTronco = texTronco.clone()
+    texPisoTronco.repeat.set(10,1)
+
+    texPedraEscura.colorSpace = THREE.SRGBColorSpace;
+    texPedraEscura.wrapS = THREE.RepeatWrapping;
+    texPedraEscura.wrapT = THREE.RepeatWrapping;
+    texPedraEscura.repeat.set(8, 1);
 
     const geometria = new THREE.BoxGeometry(2, 0.5, 0.1);
-
-    const material = new THREE.MeshStandardMaterial({
-        map: texPedra
-    });
-
+    const material = new THREE.MeshStandardMaterial({map: texPedra});
     const parede = new THREE.Mesh(geometria, material);
 
-    const geometriaPilar = new THREE.BoxGeometry(0.2, 0.6, 0.2);
-
-    const materialPilar = new THREE.MeshStandardMaterial({
-        map: texTronco
-    });
-    const pilar = new THREE.Mesh(
-        geometriaPilar,
-        materialPilar
-    );
-
+    const geometriaPilar = new THREE.BoxGeometry(0.2, 0.5, 0.12);
+    const materialPilar = new THREE.MeshStandardMaterial({map: texTronco});
+    const pilar = new THREE.Mesh(geometriaPilar,materialPilar);
+    
     pilar.position.set(-0.4, 0, 0);
     const pilar_2 = pilar.clone()
     pilar_2.position.set(0.4, 0, 0)
 
+    const geometriaBase = new THREE.BoxGeometry(2.2, 0.1, 0.16)
+    const materialBase = new THREE.MeshStandardMaterial({map: texPedraEscura})
+    const base = new THREE.Mesh(geometriaBase,materialBase)
+
+    const baseSuperior = base.clone()
+
+    baseSuperior.position.set(0, 0.25, 0)
+    baseSuperior.scale.set(1, 0.4, 1)
+
+    const geometriaAmeia = new THREE.BoxGeometry(0.03, 0.03, 0.03);
+
+    const materialAmeia = new THREE.MeshStandardMaterial({map: texPedra});
+
+    for (let x = -0.9; x <= 0.9; x += 0.2) {
+        const ameia = new THREE.Mesh(geometriaAmeia,materialAmeia);
+
+        const ameiaOposta = ameia.clone()
+        ameia.position.set(x , 0.29, 0.07);
+        ameiaOposta.position.set(x , 0.29, -0.07)
+        parede.add(ameia);
+        parede.add(ameiaOposta)
+    }
+
+    const baseAmeia = baseSuperior.clone()
+    const materialAmeiaBase = new THREE.MeshStandardMaterial({map: texPisoTronco});
+    baseAmeia.position.set(0, 0.27, 0)
+    baseAmeia.scale.set(1, 0.005, 0.8);
+    baseAmeia.material = materialAmeiaBase;
+
+    parede.add(baseAmeia);
+    parede.add(baseSuperior);
+    parede.add(base);
     parede.add(pilar);
     parede.add(pilar_2);
 
@@ -305,7 +290,7 @@ class Jogo {
     this.cenario = new Cenario(this.scene);
 
     // inicializa os controles
-    this.controles = new Controles();
+    this.controles = new Controles(this.renderer.getDOMElement());
 
     // inicializa o personagem
     this.personagem = new Personagem(
@@ -315,7 +300,7 @@ class Jogo {
       this.cenario
     );
 
-    this.inimigo1 = new Inimigo("./inimigo.fbx", this.scene, 0, 0, 5, Math.PI); // rotação em 180
+    this.inimigo1 = new Inimigo("./inimigo/model.glb", this.scene, 1, 1.2, 5, Math.PI); // rotação em 180
   }
 
   iniciar() {
@@ -344,11 +329,9 @@ class Jogo {
     this.personagem.atualizar();
 
     // animação do inimigo
-    this.inimigo1.atualizar(this.personagem.personagem);
+    this.inimigo1.atualizar(this.personagem.getPosition());
 
-    const position = this.personagem.position();
-
-    this.camera.atualizarPosicao(position);
+    this.camera.atualizarPosicao(this.personagem.getPosition());
 
     this.renderer.draw(this.scene, this.camera.camera);
   };
