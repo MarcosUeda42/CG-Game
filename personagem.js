@@ -43,9 +43,14 @@ export default class Personagem {
 
     this.hitbox = new THREE.Box3();
     this.hitboxHelper = null;
-
     this.tamanhoHitbox = new THREE.Vector3(0.6, 1.8, 0.6);
     this.offsetHitbox = new THREE.Vector3(0, 0.9, 0);
+
+    this.hitboxSword = new THREE.Box3();
+    this.hitboxSwordHelper = null;
+    this.tamanhoHitboxSword = new THREE.Vector3(0.5, 1, 0.2);
+    this.offsetSword = new THREE.Vector3(1, 1, 0);
+    this.maoDireita = null;
 
     this.direcoes = {
       KeyW: new THREE.Vector3(0, 0, -1),
@@ -85,7 +90,11 @@ export default class Personagem {
         this.pivot.add(helper);        
 
         this.hitboxHelper = new THREE.Box3Helper(this.hitbox, 0xff0000);
+        this.hitboxSwordHelper = new THREE.Box3Helper(this.hitboxSword, 0xff0000);
         this.scene.add(this.hitboxHelper);
+        this.scene.add(this.hitboxSwordHelper);
+
+        this.maoDireita = this.personagem.getObjectByName("mixamorigRightHand");
 
         this.mixer = new THREE.AnimationMixer(this.personagem);
         gltf.animations.forEach((clip) => {
@@ -131,6 +140,28 @@ export default class Personagem {
       else if (this.tempoAtaque >= duracao)
         this.resetarAtaque();
     }
+  }
+  atualizarHitbox() {
+    const centro = this.pivot.position.clone();
+    centro.add(this.offsetHitbox);
+
+    const metade = this.tamanhoHitbox.clone().multiplyScalar(0.5);
+
+    this.hitbox.min.copy(centro).sub(metade);
+    this.hitbox.max.copy(centro).add(metade);
+
+    if (!this.maoDireita) return;
+
+    this.personagem.updateMatrixWorld(true);
+
+    const posicaoMao = this.maoDireita.localToWorld(
+      this.offsetSword.clone()
+    );
+
+    this.hitboxSword.setFromCenterAndSize(
+      posicaoMao,
+      this.tamanhoHitboxSword
+    );
   }
   iniciarAtaque(indice) {
     const passo = this.meleeStates[indice];
@@ -200,15 +231,6 @@ export default class Personagem {
 
     if (this.currentAction) this.currentAction.crossFadeTo(nextAction, duracao, true);
     this.currentAction = nextAction;
-  }
-  atualizarHitbox() {
-    const centro = this.pivot.position.clone();
-    centro.add(this.offsetHitbox);
-
-    const metade = this.tamanhoHitbox.clone().multiplyScalar(0.5);
-
-    this.hitbox.min.copy(centro).sub(metade);
-    this.hitbox.max.copy(centro).add(metade);
   }
   atualizar() {
     const delta = this.clock.getDelta();
