@@ -16,7 +16,11 @@ export default class Inimigo {
     this.rotacaoY = rotacaoY;
     this.velocidade = 1.5;
     this.distanciaMinima = 2;
+
     this.hitbox = new THREE.Box3();
+    this.offsetHitbox = new THREE.Vector3(0, 0, 0);
+    this.tamanhoHitbox = new THREE.Vector3(0.6, 1.8, 0.6);
+
     this.actions = {};
   }
   mudarAnimacao(nome, duracao = 0.1) {
@@ -95,6 +99,15 @@ export default class Inimigo {
       this.mudarAnimacao("Run");
     } else this.mudarAnimacao("Idle");
 
-    this.hitbox = this.hitbox.setFromObject(this.inimigo);
+    this.atualizarHitbox();
+  }
+  atualizarHitbox() {
+    const centro = this.inimigo.position.clone();
+    centro.add(this.offsetHitbox);
+
+    const metade = this.tamanhoHitbox.clone().multiplyScalar(0.5);
+
+    this.hitbox.min.copy(centro).sub(metade);
+    this.hitbox.max.copy(centro).add(metade);
   }
 }
