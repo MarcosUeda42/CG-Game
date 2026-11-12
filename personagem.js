@@ -2,8 +2,9 @@ import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 
 export default class Personagem {
-  constructor(url, scene, controles, cenario) {
+  constructor(url, scene, controles, cenario, ui) {
     this.personagem = null;
+    this.ui = ui;
     this.url = url;
     this.controles = controles;
     this.cenario = cenario;
@@ -78,6 +79,7 @@ export default class Personagem {
 
         this.pivot.position.set(1, 0.3, 1);
         this.pivot.add(this.personagem);
+        this.pivot.add(this.ui.getSprite());
         
         this.quadril = this.personagem.getObjectByName("mixamorigHips");
         this.quadrilRepouso = this.quadril.position.clone();

@@ -5,6 +5,7 @@ import Camera from "./camera.js";
 import Inimigo from "./inimigo.js";
 import Controles from "./controles.js";
 import Renderer from "./renderer.js";
+import UI from "./ui.js"
 
 // classe do cenario, terreno + iluminação
 class Cenario {
@@ -281,15 +282,18 @@ class Jogo {
     // inicializa os controles
     this.controles = new Controles(this.renderer.getDOMElement());
 
+    this.ui = new UI();
     // inicializa o personagem
     this.personagem = new Personagem(
       "./personagem/model.glb",
       this.scene,
       this.controles,
-      this.cenario
+      this.cenario,
+      this.ui
     );
 
     this.inimigo1 = new Inimigo("./inimigo/model.glb", this.scene, 1, 1.2, 5, Math.PI); // rotação em 180
+
   }
 
   iniciar() {
@@ -324,6 +328,8 @@ class Jogo {
     this.camera.atualizarPosicao(this.personagem.getPosition());
 
     this.renderer.draw(this.scene, this.camera.camera);
+
+    this.ui.updateSpriteHealth(50, 100);
   };
 }
 
