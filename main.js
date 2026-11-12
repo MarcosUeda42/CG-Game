@@ -4,21 +4,7 @@ import Personagem from "./personagem.js";
 import Camera from "./camera.js";
 import Inimigo from "./inimigo.js";
 import Controles from "./controles.js";
-
-// classe do Renderizador (WebGL)
-class Renderer {
-  constructor() {
-    this.renderer = new THREE.WebGLRenderer({ antialias: true });
-    this.renderer.setSize(window.innerWidth, window.innerHeight);
-    document.body.appendChild(this.renderer.domElement);
-  }
-  draw(scene, camera) {
-    this.renderer.render(scene, camera);
-  }
-  getDOMElement() {
-    return this.renderer.domElement;
-  }
-}
+import Renderer from "./renderer.js";
 
 // classe do cenario, terreno + iluminação
 class Cenario {
