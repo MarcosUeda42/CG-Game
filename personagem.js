@@ -43,9 +43,14 @@ export default class Personagem {
 
     this.hitbox = new THREE.Box3();
     this.hitboxHelper = null;
-
     this.tamanhoHitbox = new THREE.Vector3(0.6, 1.8, 0.6);
     this.offsetHitbox = new THREE.Vector3(0, 0.9, 0);
+
+    this.hitboxSword = new THREE.Box3();
+    this.hitboxSwordHelper = null;
+    this.tamanhoHitboxSword = new THREE.Vector3(0.5, 1, 0.2);
+    this.offsetSword = new THREE.Vector3(1, 1, 0);
+    this.maoDireita = null;
 
     this.direcoes = {
       KeyW: new THREE.Vector3(0, 0, -1),
@@ -54,6 +59,10 @@ export default class Personagem {
       KeyD: new THREE.Vector3(1, 0, 0),
     };
     this.proximoSolicitado = false;
+
+    this.correndo = false;
+    this.fatorCorrida = 1;
+
     this.resetarAtaque();
   }
   carregar() {
@@ -65,9 +74,9 @@ export default class Personagem {
 
         this.personagem = gltf.scene;
         this.personagem.scale.setScalar(0.01);
+        this.personagem.position.set(0, 1, 0.01);
 
-        this.pivot.position.set(1, 1, 1);
-        this.personagem.position.set(0, 1, -1)
+        this.pivot.position.set(1, 0.3, 1);
         this.pivot.add(this.personagem);
         
         this.quadril = this.personagem.getObjectByName("mixamorigHips");
@@ -81,7 +90,11 @@ export default class Personagem {
         this.pivot.add(helper);        
 
         this.hitboxHelper = new THREE.Box3Helper(this.hitbox, 0xff0000);
+        this.hitboxSwordHelper = new THREE.Box3Helper(this.hitboxSword, 0xff0000);
         this.scene.add(this.hitboxHelper);
+        this.scene.add(this.hitboxSwordHelper);
+
+        this.maoDireita = this.personagem.getObjectByName("mixamorigRightHand");
 
         this.mixer = new THREE.AnimationMixer(this.personagem);
         gltf.animations.forEach((clip) => {
@@ -127,6 +140,28 @@ export default class Personagem {
       else if (this.tempoAtaque >= duracao)
         this.resetarAtaque();
     }
+  }
+  atualizarHitbox() {
+    const centro = this.pivot.position.clone();
+    centro.add(this.offsetHitbox);
+
+    const metade = this.tamanhoHitbox.clone().multiplyScalar(0.5);
+
+    this.hitbox.min.copy(centro).sub(metade);
+    this.hitbox.max.copy(centro).add(metade);
+
+    if (!this.maoDireita) return;
+
+    this.personagem.updateMatrixWorld(true);
+
+    const posicaoMao = this.maoDireita.localToWorld(
+      this.offsetSword.clone()
+    );
+
+    this.hitboxSword.setFromCenterAndSize(
+      posicaoMao,
+      this.tamanhoHitboxSword
+    );
   }
   iniciarAtaque(indice) {
     const passo = this.meleeStates[indice];
@@ -197,20 +232,12 @@ export default class Personagem {
     if (this.currentAction) this.currentAction.crossFadeTo(nextAction, duracao, true);
     this.currentAction = nextAction;
   }
-  atualizarHitbox() {
-    const centro = this.pivot.position.clone();
-    centro.add(this.offsetHitbox);
-
-    const metade = this.tamanhoHitbox.clone().multiplyScalar(0.5);
-
-    this.hitbox.min.copy(centro).sub(metade);
-    this.hitbox.max.copy(centro).add(metade);
-  }
   atualizar() {
     const delta = this.clock.getDelta();
     if (this.mixer) this.mixer.update(delta);
     
     if (!this.personagem) return;
+    this.correndo = this.controles.getKeyStatus("Space");
     
     this.atualizarHitbox();
     this.acompanharQuadril(this.passoMelee !== -1);
@@ -224,7 +251,10 @@ export default class Personagem {
       if (this.controles.teclas[tecla]) direcao.add(this.direcoes[tecla]);
     
     if (direcao.lengthSq() > 0) {
-      const passo = this.velocidade * delta;
+      if(this.correndo) this.fatorCorrida = 1.5;
+      else this.fatorCorrida = 1;
+
+      const passo = this.velocidade * this.fatorCorrida * delta;
       direcao.normalize();
       this.pivot.position.addScaledVector(direcao, passo);
       const alvo = Math.atan2(direcao.x, direcao.z);
@@ -235,7 +265,9 @@ export default class Personagem {
       const fator = 1 - Math.exp(-this.velocidadeGiro * delta);
       this.pivot.rotation.y += diferenca * fator;
       
-      this.mudarAnimacao("Walk");
+      this.mudarAnimacao(
+        this.correndo ? "Run" : "Walk"
+      );
     } else this.mudarAnimacao("Idle");
   }
   colision() {
@@ -251,5 +283,13 @@ export default class Personagem {
   getPosition(){
     if (this.personagem) return this.pivot.position;
     return new THREE.Vector3(0, 0, 0);
+  }
+
+  verificarAcerto(oponente) {
+    if(!oponente.ativo) return
+    if (this.hitboxSword.intersectsBox(oponente.hitbox)) {
+      oponente.ativo = 0;
+      console.log("acertou inimigo")
+    }
   }
 }

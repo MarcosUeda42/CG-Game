@@ -31,4 +31,8 @@ export default class Controles {
   getMouseState() {
     return this.mousePressionado;
   }
+
+  getKeyStatus(key) {
+    return this.teclas[key];
+  }
 }

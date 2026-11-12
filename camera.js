@@ -29,13 +29,13 @@ export default class Camera {
     this.camera.lookAt(pos.x, pos.y, pos.z);
   }
 
-  orbitarEsquerda(velocidade = 0.03) {
+  orbitarEsquerda(pos, velocidade = 0.03) {
     this.angulo -= velocidade;
-    this.atualizarPosicao();
+    this.atualizarPosicao(pos);
   }
 
-  orbitarDireita(velocidade = 0.03) {
+  orbitarDireita(pos, velocidade = 0.03) {
     this.angulo += velocidade;
-    this.atualizarPosicao();
+    this.atualizarPosicao(pos);
   }
 }

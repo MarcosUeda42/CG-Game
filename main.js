@@ -311,26 +311,27 @@ class Jogo {
     this.inimigo1.carregar();
     this.personagem.carregar();
     this.animar();
-  }
 
+  }
+  
   animar = () => {
     requestAnimationFrame(this.animar);
-
+    
     // animação da câmera
-
+    
     if (this.controles.teclas["KeyQ"]) {
-      this.camera.orbitarEsquerda();
+      this.camera.orbitarEsquerda(this.personagem.getPosition());
     } else if (this.controles.teclas["KeyE"]) {
-      this.camera.orbitarDireita();
+      this.camera.orbitarDireita(this.personagem.getPosition());
     }
-
+    
     if (this.controles.teclas["KeyC"]) {
       this.camera.modo = (this.camera.modo + 1) % 2;
       this.controles.teclas["KeyC"] = false;
     }
-
+    
     this.personagem.atualizar();
-
+    this.personagem.verificarAcerto(this.inimigo1, this.scene)
     // animação do inimigo
     this.inimigo1.atualizar(this.personagem.getPosition());
 
