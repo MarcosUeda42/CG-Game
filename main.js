@@ -102,6 +102,12 @@ class Cenario {
           obj.material.map = texTronco;
           obj.material.needsUpdate = true;
         }
+
+        obj.material.roughness = 1;      // 1 = totalmente fosco
+        obj.material.metalness = 0;      // sem aparência metálica
+        obj.material.roughnessMap = null;
+        obj.material.metalnessMap = null;
+        obj.material.needsUpdate = true;
       });
 
       //modelo, x, y, z, escala
