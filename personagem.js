@@ -51,7 +51,7 @@ export default class Personagem {
     this.tamanhoHitboxSword = new THREE.Vector3(0.5, 1, 0.2);
     this.offsetSword = new THREE.Vector3(1, 1, 0);
     this.maoDireita = null;
-
+    
     this.direcoes = {
       KeyW: new THREE.Vector3(0, 0, -1),
       KeyS: new THREE.Vector3(0, 0, 1),
@@ -235,10 +235,16 @@ export default class Personagem {
   atualizar() {
     const delta = this.clock.getDelta();
     if (this.mixer) this.mixer.update(delta);
-    
+
     if (!this.personagem) return;
     this.correndo = this.controles.getKeyStatus("Space");
     
+    const posicaoAnterior = new THREE.Vector3(
+      this.pivot.position.x * 0.999, 
+      this.pivot.position.y, 
+      this.pivot.position.z * 0.999
+    );
+
     this.atualizarHitbox();
     this.acompanharQuadril(this.passoMelee !== -1);
 
@@ -249,6 +255,7 @@ export default class Personagem {
     const direcao = new THREE.Vector3();
     for (const tecla in this.direcoes)
       if (this.controles.teclas[tecla]) direcao.add(this.direcoes[tecla]);
+
     
     if (direcao.lengthSq() > 0) {
       if(this.correndo) this.fatorCorrida = 1.5;
@@ -269,13 +276,11 @@ export default class Personagem {
         this.correndo ? "Run" : "Walk"
       );
     } else this.mudarAnimacao("Idle");
-  }
-  colision() {
+
     for (const parede of this.cenario.hitboxesParedes) {
       if (this.hitbox.intersectsBox(parede)) {
         this.pivot.position.copy(posicaoAnterior);
         this.pivot.updateMatrixWorld(true);
-        this.atualizarHitbox();
         break;
       }
     }
@@ -284,7 +289,6 @@ export default class Personagem {
     if (this.personagem) return this.pivot.position;
     return new THREE.Vector3(0, 0, 0);
   }
-
   verificarAcerto(oponente) {
     if(!oponente.ativo) return
     if (this.hitboxSword.intersectsBox(oponente.hitbox)) {
