@@ -20,7 +20,7 @@ export default class Personagem {
         inicio: 0.0,
         fim: 1.2,
         hitInicio: 0.2,
-        hitFim: 0.35, 
+        hitFim: 0.35,
         dano: 8,
       },
       {
@@ -39,7 +39,7 @@ export default class Personagem {
       },
     ];
     this.tempoRecarga = 0;
-    this.passoMelee = -1;    
+    this.passoMelee = -1;
     this.velocidadeGiro = 10;
 
     this.hitbox = new THREE.Box3();
@@ -52,7 +52,7 @@ export default class Personagem {
     this.tamanhoHitboxSword = new THREE.Vector3(0.5, 1, 0.2);
     this.offsetSword = new THREE.Vector3(1, 1, 0);
     this.maoDireita = null;
-    
+
     this.direcoes = {
       KeyW: new THREE.Vector3(0, 0, -1),
       KeyS: new THREE.Vector3(0, 0, 1),
@@ -80,7 +80,7 @@ export default class Personagem {
         this.pivot.position.set(1, 0.3, 1);
         this.pivot.add(this.personagem);
         this.pivot.add(this.ui.getSprite());
-        
+
         this.quadril = this.personagem.getObjectByName("mixamorigHips");
         this.quadrilRepouso = this.quadril.position.clone();
         this._offX = null;
@@ -89,10 +89,13 @@ export default class Personagem {
         this._wR = new THREE.Vector3();
 
         const helper = new THREE.AxesHelper(2);
-        this.pivot.add(helper);        
+        this.pivot.add(helper);
 
         this.hitboxHelper = new THREE.Box3Helper(this.hitbox, 0xff0000);
-        this.hitboxSwordHelper = new THREE.Box3Helper(this.hitboxSword, 0xff0000);
+        this.hitboxSwordHelper = new THREE.Box3Helper(
+          this.hitboxSword,
+          0xff0000,
+        );
         this.scene.add(this.hitboxHelper);
         this.scene.add(this.hitboxSwordHelper);
 
@@ -122,7 +125,8 @@ export default class Personagem {
     if (this.tempoRecarga > 0) this.tempoRecarga -= delta;
 
     if (this.passoMelee === -1) {
-      if (this.controles.getMouseState() && this.tempoRecarga <= 0) this.iniciarAtaque(0);
+      if (this.controles.getMouseState() && this.tempoRecarga <= 0)
+        this.iniciarAtaque(0);
       return;
     }
 
@@ -132,15 +136,15 @@ export default class Personagem {
 
     const tClip = passo.inicio + this.tempoAtaque;
 
-    if (this.controles.getMouseState() && tClip >= passo.hitInicio) this.proximoSolicitado = true;
+    if (this.controles.getMouseState() && tClip >= passo.hitInicio)
+      this.proximoSolicitado = true;
 
     if (this.tempoAtaque >= duracao) {
       const temProximo = this.passoMelee + 1 < this.meleeStates.length;
 
       if (this.proximoSolicitado && temProximo)
         this.iniciarAtaque(this.passoMelee + 1);
-      else if (this.tempoAtaque >= duracao)
-        this.resetarAtaque();
+      else if (this.tempoAtaque >= duracao) this.resetarAtaque();
     }
   }
   atualizarHitbox() {
@@ -156,14 +160,9 @@ export default class Personagem {
 
     this.personagem.updateMatrixWorld(true);
 
-    const posicaoMao = this.maoDireita.localToWorld(
-      this.offsetSword.clone()
-    );
+    const posicaoMao = this.maoDireita.localToWorld(this.offsetSword.clone());
 
-    this.hitboxSword.setFromCenterAndSize(
-      posicaoMao,
-      this.tamanhoHitboxSword
-    );
+    this.hitboxSword.setFromCenterAndSize(posicaoMao, this.tamanhoHitboxSword);
   }
   iniciarAtaque(indice) {
     const passo = this.meleeStates[indice];
@@ -171,7 +170,7 @@ export default class Personagem {
 
     this.passoMelee = indice;
     this.tempoAtaque = 0;
-    
+
     this.proximoSolicitado = false;
     this._offX = null;
     this._offZ = null;
@@ -186,8 +185,7 @@ export default class Personagem {
       acao.time = passo.inicio;
       acao.enabled = true;
       acao.play();
-      if (this.currentAction) 
-        this.currentAction.crossFadeTo(acao, 0.3, true);
+      if (this.currentAction) this.currentAction.crossFadeTo(acao, 0.3, true);
       this.currentAction = acao;
     }
   }
@@ -231,7 +229,8 @@ export default class Personagem {
     nextAction.setEffectiveWeight(1);
     nextAction.play();
 
-    if (this.currentAction) this.currentAction.crossFadeTo(nextAction, duracao, true);
+    if (this.currentAction)
+      this.currentAction.crossFadeTo(nextAction, duracao, true);
     this.currentAction = nextAction;
   }
   atualizar() {
@@ -240,11 +239,11 @@ export default class Personagem {
 
     if (!this.personagem) return;
     this.correndo = this.controles.getKeyStatus("Space");
-    
+
     const posicaoAnterior = new THREE.Vector3(
-      this.pivot.position.x * 0.999, 
-      this.pivot.position.y, 
-      this.pivot.position.z * 0.999
+      this.pivot.position.x * 0.999,
+      this.pivot.position.y,
+      this.pivot.position.z * 0.999,
     );
 
     this.atualizarHitbox();
@@ -258,25 +257,22 @@ export default class Personagem {
     for (const tecla in this.direcoes)
       if (this.controles.teclas[tecla]) direcao.add(this.direcoes[tecla]);
 
-    
     if (direcao.lengthSq() > 0) {
-      if(this.correndo) this.fatorCorrida = 1.5;
+      if (this.correndo) this.fatorCorrida = 1.5;
       else this.fatorCorrida = 1;
 
       const passo = this.velocidade * this.fatorCorrida * delta;
       direcao.normalize();
       this.pivot.position.addScaledVector(direcao, passo);
       const alvo = Math.atan2(direcao.x, direcao.z);
-      
+
       let diferenca = alvo - this.pivot.rotation.y;
       diferenca = Math.atan2(Math.sin(diferenca), Math.cos(diferenca));
 
       const fator = 1 - Math.exp(-this.velocidadeGiro * delta);
       this.pivot.rotation.y += diferenca * fator;
-      
-      this.mudarAnimacao(
-        this.correndo ? "Run" : "Walk"
-      );
+
+      this.mudarAnimacao(this.correndo ? "Run" : "Walk");
     } else this.mudarAnimacao("Idle");
 
     for (const parede of this.cenario.hitboxesParedes) {
@@ -287,15 +283,15 @@ export default class Personagem {
       }
     }
   }
-  getPosition(){
+  getPosition() {
     if (this.personagem) return this.pivot.position;
     return new THREE.Vector3(0, 0, 0);
   }
   verificarAcerto(oponente) {
-    if(!oponente.ativo) return
+    if (!oponente.ativo) return;
     if (this.hitboxSword.intersectsBox(oponente.hitbox)) {
       oponente.ativo = 0;
-      console.log("acertou inimigo")
+      console.log("acertou inimigo");
     }
   }
 }

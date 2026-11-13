@@ -34,7 +34,8 @@ export default class Inimigo {
     nextAction.setEffectiveWeight(1);
     nextAction.play();
 
-    if (this.currentAction) this.currentAction.crossFadeTo(nextAction, duracao, true);
+    if (this.currentAction)
+      this.currentAction.crossFadeTo(nextAction, duracao, true);
     this.currentAction = nextAction;
   }
   carregar() {
@@ -72,12 +73,12 @@ export default class Inimigo {
   }
   atualizar(target) {
     const delta = this.clock.getDelta();
-    if(!this.ativo){
-      this.scene.remove(this.inimigo)
+    if (!this.ativo) {
+      this.scene.remove(this.inimigo);
       this.hitbox.makeEmpty();
-      this.scene.remove(this.helper)
-      return
-    } 
+      this.scene.remove(this.helper);
+      return;
+    }
 
     if (this.mixer) this.mixer.update(delta);
     if (!this.inimigo || !target) return;
@@ -109,7 +110,7 @@ export default class Inimigo {
     this.atualizarHitbox();
   }
   atualizarHitbox() {
-    if(!this.ativo) return
+    if (!this.ativo) return;
     const centro = this.inimigo.position.clone();
     centro.add(this.offsetHitbox);
 

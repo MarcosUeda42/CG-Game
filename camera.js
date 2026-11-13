@@ -14,9 +14,7 @@ export default class Camera {
     this.altura = [30, 4];
 
     this.modo = 0;
-    //this.atualizarPosicao();
   }
-
   atualizarPosicao(pos) {
     const r = this.raio[this.modo];
     const a = this.altura[this.modo];
@@ -28,12 +26,10 @@ export default class Camera {
     // camera olha para o personagem
     this.camera.lookAt(pos.x, pos.y, pos.z);
   }
-
   orbitarEsquerda(pos, velocidade = 0.03) {
     this.angulo -= velocidade;
     this.atualizarPosicao(pos);
   }
-
   orbitarDireita(pos, velocidade = 0.03) {
     this.angulo += velocidade;
     this.atualizarPosicao(pos);

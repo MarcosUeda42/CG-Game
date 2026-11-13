@@ -5,7 +5,7 @@ import Camera from "./camera.js";
 import Inimigo from "./inimigo.js";
 import Controles from "./controles.js";
 import Renderer from "./renderer.js";
-import UI from "./ui.js"
+import UI from "./ui.js";
 
 // classe do cenario, terreno + iluminação
 class Cenario {
@@ -73,7 +73,6 @@ class Cenario {
         const z = Math.random() * 50 - 25;
         const escala = 0.8 + Math.random() * 0.7;
 
-
         this.adicionarModelo(montanha, x, 0, z, escala);
       }
     });
@@ -104,8 +103,8 @@ class Cenario {
           obj.material.needsUpdate = true;
         }
 
-        obj.material.roughness = 1;      // 1 = totalmente fosco
-        obj.material.metalness = 0;      // sem aparência metálica
+        obj.material.roughness = 1; // 1 = totalmente fosco
+        obj.material.metalness = 0; // sem aparência metálica
         obj.material.roughnessMap = null;
         obj.material.metalnessMap = null;
         obj.material.needsUpdate = true;
@@ -140,15 +139,18 @@ class Cenario {
     const loader = new GLTFLoader();
 
     // https://poly.pizza/m/pNsfJzhXiD
-    loader.load("./objetos/Wooden Torch by Quaternius - pNsfJzhXiD.glb", (gltf) => {
-      const tocha = gltf.scene;
+    loader.load(
+      "./objetos/Wooden Torch by Quaternius - pNsfJzhXiD.glb",
+      (gltf) => {
+        const tocha = gltf.scene;
 
-      this.adicionarTocha(tocha, -18, 0, 3, 0.75);
-      this.adicionarTocha(tocha, -3, 0, -8, 0.75);
-      this.adicionarTocha(tocha, -7, 0, 9, 0.75);
-      this.adicionarTocha(tocha, 6, 0, -6, 0.75);
-      this.adicionarTocha(tocha, 4, 0, 8, 0.75);
-    });
+        this.adicionarTocha(tocha, -18, 0, 3, 0.75);
+        this.adicionarTocha(tocha, -3, 0, -8, 0.75);
+        this.adicionarTocha(tocha, -7, 0, 9, 0.75);
+        this.adicionarTocha(tocha, 6, 0, -6, 0.75);
+        this.adicionarTocha(tocha, 4, 0, 8, 0.75);
+      },
+    );
   }
 
   criarGrama() {
@@ -168,7 +170,7 @@ class Cenario {
     });
   }
 
-criarParede() {
+  criarParede() {
     const texLoader = new THREE.TextureLoader();
 
     const texPedra = texLoader.load("./texturas/stone.png");
@@ -183,9 +185,9 @@ criarParede() {
     texTronco.wrapS = THREE.RepeatWrapping;
     texTronco.wrapT = THREE.RepeatWrapping;
     texTronco.repeat.set(2, 2);
-  
-    const texPisoTronco = texTronco.clone()
-    texPisoTronco.repeat.set(10,1)
+
+    const texPisoTronco = texTronco.clone();
+    texPisoTronco.repeat.set(10, 1);
 
     texPedraEscura.colorSpace = THREE.SRGBColorSpace;
     texPedraEscura.wrapS = THREE.RepeatWrapping;
@@ -193,43 +195,47 @@ criarParede() {
     texPedraEscura.repeat.set(8, 1);
 
     const geometria = new THREE.BoxGeometry(2, 0.5, 0.1);
-    const material = new THREE.MeshStandardMaterial({map: texPedra});
+    const material = new THREE.MeshStandardMaterial({ map: texPedra });
     const parede = new THREE.Mesh(geometria, material);
 
     const geometriaPilar = new THREE.BoxGeometry(0.2, 0.5, 0.12);
-    const materialPilar = new THREE.MeshStandardMaterial({map: texTronco});
-    const pilar = new THREE.Mesh(geometriaPilar,materialPilar);
-    
+    const materialPilar = new THREE.MeshStandardMaterial({ map: texTronco });
+    const pilar = new THREE.Mesh(geometriaPilar, materialPilar);
+
     pilar.position.set(-0.4, 0, 0);
-    const pilar_2 = pilar.clone()
-    pilar_2.position.set(0.4, 0, 0)
+    const pilar_2 = pilar.clone();
+    pilar_2.position.set(0.4, 0, 0);
 
-    const geometriaBase = new THREE.BoxGeometry(2.2, 0.1, 0.16)
-    const materialBase = new THREE.MeshStandardMaterial({map: texPedraEscura})
-    const base = new THREE.Mesh(geometriaBase,materialBase)
+    const geometriaBase = new THREE.BoxGeometry(2.2, 0.1, 0.16);
+    const materialBase = new THREE.MeshStandardMaterial({
+      map: texPedraEscura,
+    });
+    const base = new THREE.Mesh(geometriaBase, materialBase);
 
-    const baseSuperior = base.clone()
+    const baseSuperior = base.clone();
 
-    baseSuperior.position.set(0, 0.25, 0)
-    baseSuperior.scale.set(1, 0.4, 1)
+    baseSuperior.position.set(0, 0.25, 0);
+    baseSuperior.scale.set(1, 0.4, 1);
 
     const geometriaAmeia = new THREE.BoxGeometry(0.03, 0.03, 0.03);
 
-    const materialAmeia = new THREE.MeshStandardMaterial({map: texPedra});
+    const materialAmeia = new THREE.MeshStandardMaterial({ map: texPedra });
 
     for (let x = -0.9; x <= 0.9; x += 0.2) {
-        const ameia = new THREE.Mesh(geometriaAmeia,materialAmeia);
+      const ameia = new THREE.Mesh(geometriaAmeia, materialAmeia);
 
-        const ameiaOposta = ameia.clone()
-        ameia.position.set(x , 0.29, 0.07);
-        ameiaOposta.position.set(x , 0.29, -0.07)
-        parede.add(ameia);
-        parede.add(ameiaOposta)
+      const ameiaOposta = ameia.clone();
+      ameia.position.set(x, 0.29, 0.07);
+      ameiaOposta.position.set(x, 0.29, -0.07);
+      parede.add(ameia);
+      parede.add(ameiaOposta);
     }
 
-    const baseAmeia = baseSuperior.clone()
-    const materialAmeiaBase = new THREE.MeshStandardMaterial({map: texPisoTronco});
-    baseAmeia.position.set(0, 0.27, 0)
+    const baseAmeia = baseSuperior.clone();
+    const materialAmeiaBase = new THREE.MeshStandardMaterial({
+      map: texPisoTronco,
+    });
+    baseAmeia.position.set(0, 0.27, 0);
     baseAmeia.scale.set(1, 0.005, 0.8);
     baseAmeia.material = materialAmeiaBase;
 
@@ -240,23 +246,23 @@ criarParede() {
     parede.add(pilar_2);
 
     const paredes = [
-        this.adicionarModelo(parede, 0, 0, -25, 25),
-        this.adicionarModelo(parede, 0, 0, 25, 25),
-        this.adicionarModelo(parede, 25, 0, 0, 25, -Math.PI / 2),
-        this.adicionarModelo(parede, -25, 0, 0, 25, -Math.PI / 2),
+      this.adicionarModelo(parede, 0, 0, -25, 25),
+      this.adicionarModelo(parede, 0, 0, 25, 25),
+      this.adicionarModelo(parede, 25, 0, 0, 25, -Math.PI / 2),
+      this.adicionarModelo(parede, -25, 0, 0, 25, -Math.PI / 2),
     ];
 
     paredes.forEach((obj) => {
-        obj.updateMatrixWorld(true);
+      obj.updateMatrixWorld(true);
 
-        const hitbox = new THREE.Box3().setFromObject(obj);
+      const hitbox = new THREE.Box3().setFromObject(obj);
 
-        this.hitboxesParedes.push(hitbox);
+      this.hitboxesParedes.push(hitbox);
 
-        const helper = new THREE.Box3Helper(hitbox, 0x00ff00);
-        this.scene.add(helper);
+      const helper = new THREE.Box3Helper(hitbox, 0x00ff00);
+      this.scene.add(helper);
     });
-}
+  }
 
   renderizar() {
     this.criarTerreno();
@@ -295,39 +301,38 @@ class Jogo {
       this.scene,
       this.controles,
       this.cenario,
-      this.ui
+      this.ui,
     );
 
-    this.inimigo1 = new Inimigo("./inimigo/model.glb", this.scene, 1, 1.2, 5, Math.PI); // rotação em 180
-
+    this.inimigo1 = new Inimigo(
+      "./inimigo/model.glb",
+      this.scene,
+      1,
+      1.2,
+      5,
+      Math.PI,
+    ); // rotação em 180
   }
-
   iniciar() {
     this.cenario.renderizar();
     this.inimigo1.carregar();
     this.personagem.carregar();
     this.animar();
-
   }
-  
   animar = () => {
     requestAnimationFrame(this.animar);
-    
     // animação da câmera
-    
-    if (this.controles.teclas["KeyQ"]) {
+    if (this.controles.teclas["KeyQ"])
       this.camera.orbitarEsquerda(this.personagem.getPosition());
-    } else if (this.controles.teclas["KeyE"]) {
+    else if (this.controles.teclas["KeyE"])
       this.camera.orbitarDireita(this.personagem.getPosition());
-    }
-    
-    if (this.controles.teclas["KeyC"]) {
+
+    if (this.controles.teclas["KeyC"])
       this.camera.modo = (this.camera.modo + 1) % 2;
-      this.controles.teclas["KeyC"] = false;
-    }
-    
+    this.controles.teclas["KeyC"] = false;
+
     this.personagem.atualizar();
-    this.personagem.verificarAcerto(this.inimigo1, this.scene)
+    this.personagem.verificarAcerto(this.inimigo1, this.scene);
     // animação do inimigo
     this.inimigo1.atualizar(this.personagem.getPosition());
 
