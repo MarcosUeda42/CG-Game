@@ -5,6 +5,7 @@ import Camera from "./camera.js";
 import Inimigo from "./inimigo.js";
 import Controles from "./controles.js";
 import Renderer from "./renderer.js";
+import GeradorInimigo from "./gerador_inimigo.js";
 
 // classe do cenario, terreno + iluminação
 class Cenario {
@@ -295,12 +296,12 @@ class Jogo {
       this.cenario
     );
 
-    this.inimigo1 = new Inimigo("./inimigo/model.glb", this.scene, 1, 1.2, 5, Math.PI); // rotação em 180
+    this.geradorInimigo = new GeradorInimigo(this.scene)
+    this.clock = new THREE.Clock();
   }
 
   iniciar() {
     this.cenario.renderizar();
-    this.inimigo1.carregar();
     this.personagem.carregar();
     this.animar();
 
@@ -308,7 +309,8 @@ class Jogo {
   
   animar = () => {
     requestAnimationFrame(this.animar);
-    
+    const delta = this.clock.getDelta();
+
     // animação da câmera
     
     if (this.controles.teclas["KeyQ"]) {
@@ -323,9 +325,12 @@ class Jogo {
     }
     
     this.personagem.atualizar();
-    this.personagem.verificarAcerto(this.inimigo1, this.scene)
+
     // animação do inimigo
-    this.inimigo1.atualizar(this.personagem.getPosition());
+    this.geradorInimigo.atualizar(delta, this.personagem.getPosition());
+    for (const inimigo of this.geradorInimigo.inimigos) {
+      this.personagem.verificarAcerto(inimigo, this.scene);
+    }
 
     this.camera.atualizarPosicao(this.personagem.getPosition());
 

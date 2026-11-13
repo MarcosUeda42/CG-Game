@@ -70,14 +70,7 @@ export default class Inimigo {
       },
     );
   }
-  atualizar(target) {
-    const delta = this.clock.getDelta();
-    if(!this.ativo){
-      this.scene.remove(this.inimigo)
-      this.hitbox.makeEmpty();
-      this.scene.remove(this.helper)
-      return
-    } 
+  atualizar(target, delta) {
 
     if (this.mixer) this.mixer.update(delta);
     if (!this.inimigo || !target) return;
@@ -117,5 +110,27 @@ export default class Inimigo {
 
     this.hitbox.min.copy(centro).sub(metade);
     this.hitbox.max.copy(centro).add(metade);
+  }
+
+  remover() {
+    if (this.helper) {
+      this.scene.remove(this.helper);
+      this.helper.dispose();
+    }
+    if (this.inimigo) {
+      this.scene.remove(this.inimigo);
+
+      this.inimigo.traverse((child) => {
+        if (child.isMesh) {
+          child.geometry?.dispose();
+          if (child.material) {
+            if (Array.isArray(child.material)) child.material.forEach(m => m.dispose());
+            else child.material.dispose();
+          }
+        }
+      });
+    }
+    this.hitbox.makeEmpty();
+    this.ativo = 0;
   }
 }
