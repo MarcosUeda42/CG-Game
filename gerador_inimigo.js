@@ -11,7 +11,7 @@ export default class GeradorInimigo{
         this.limite = 5;
     }
 
-    atualizar(delta, posJogador){
+    atualizar(delta, posJogador, listaProjeteis){
         this.tempoTotal += delta;
         this.tempoUltimoInimigo += delta;
 
@@ -29,7 +29,7 @@ export default class GeradorInimigo{
                 this.inimigos.splice(i,1);
                 continue
             }
-            inimigo.atualizar(posJogador, delta);
+            inimigo.atualizar(posJogador, delta, listaProjeteis);
         }
     }
     

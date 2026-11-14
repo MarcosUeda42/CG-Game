@@ -1,5 +1,6 @@
 import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+import Projetil from "./projetil.js";
 
 export default class Inimigo {
   constructor(url, scene, x, y, z, rotacaoY) {
@@ -18,6 +19,10 @@ export default class Inimigo {
     this.distanciaMinima = 2;
     this.ativo = 1;
 
+    this.cooldownAtaque = 6.0; 
+    this.tempoDesdeUltimoAtaque = Math.random() * 2.0; 
+    this.distanciaDisparo = 15; 
+
     this.hitbox = new THREE.Box3();
     this.offsetHitbox = new THREE.Vector3(0, 0, 0);
     this.tamanhoHitbox = new THREE.Vector3(0.6, 1.8, 0.6);
@@ -34,7 +39,8 @@ export default class Inimigo {
     nextAction.setEffectiveWeight(1);
     nextAction.play();
 
-    if (this.currentAction) this.currentAction.crossFadeTo(nextAction, duracao, true);
+    if (this.currentAction)
+      this.currentAction.crossFadeTo(nextAction, duracao, true);
     this.currentAction = nextAction;
   }
   carregar() {
@@ -70,8 +76,7 @@ export default class Inimigo {
       },
     );
   }
-  atualizar(target, delta) {
-
+  atualizar(target, delta, listaProjeteis) {
     if (this.mixer) this.mixer.update(delta);
     if (!this.inimigo || !target) return;
 
@@ -99,10 +104,20 @@ export default class Inimigo {
       this.mudarAnimacao("Run");
     } else this.mudarAnimacao("Idle");
 
+    this.tempoDesdeUltimoAtaque += delta;
+    const dist = this.inimigo.position.distanceTo(target);
+    if (
+      dist <= this.distanciaDisparo &&
+      this.tempoDesdeUltimoAtaque >= this.cooldownAtaque
+    ) {
+      this.dispararBolaDeFogo(target, listaProjeteis);
+      this.tempoDesdeUltimoAtaque = 0;
+    }
+
     this.atualizarHitbox();
   }
   atualizarHitbox() {
-    if(!this.ativo) return
+    if (!this.ativo) return;
     const centro = this.inimigo.position.clone();
     centro.add(this.offsetHitbox);
 
@@ -124,7 +139,8 @@ export default class Inimigo {
         if (child.isMesh) {
           child.geometry?.dispose();
           if (child.material) {
-            if (Array.isArray(child.material)) child.material.forEach(m => m.dispose());
+            if (Array.isArray(child.material))
+              child.material.forEach((m) => m.dispose());
             else child.material.dispose();
           }
         }
@@ -132,5 +148,19 @@ export default class Inimigo {
     }
     this.hitbox.makeEmpty();
     this.ativo = 0;
+  }
+  dispararBolaDeFogo(alvoPos, listaProjeteis) {
+    const origem = this.inimigo.position.clone();
+    origem.y = 1;
+
+    const alvo = alvoPos.clone();
+    alvo.y = 1;
+    const direcao = new THREE.Vector3().subVectors(alvo, origem);
+
+    const anguloDesvio = Math.random() * Math.PI * 0.05;
+    direcao.applyAxisAngle(new THREE.Vector3(0, 1, 0), anguloDesvio).normalize()
+
+    const projetil = new Projetil(this.scene, origem, direcao);
+    listaProjeteis.push(projetil);
   }
 }
