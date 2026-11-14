@@ -2,7 +2,13 @@
 import * as THREE from "three";
 
 export default class Projetil {
-  constructor(scene, posOrigem, dirDisparo, velocidade = 6, alcanceMaxTempo = 4.0) {
+  constructor(
+    scene,
+    posOrigem,
+    dirDisparo,
+    velocidade = 6,
+    alcanceMaxTempo = 4.0,
+  ) {
     this.scene = scene;
     this.velocidade = velocidade;
     this.tempoVida = alcanceMaxTempo;

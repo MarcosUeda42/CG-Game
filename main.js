@@ -330,7 +330,11 @@ class Jogo {
 
     this.personagem.atualizar(this.camera);
 
-    this.geradorInimigo.atualizar(delta, this.personagem.getPosition(), this.projeteis);
+    this.geradorInimigo.atualizar(
+      delta,
+      this.personagem.getPosition(),
+      this.projeteis,
+    );
     for (const inimigo of this.geradorInimigo.inimigos) {
       this.personagem.verificarAcerto(inimigo, this.scene);
     }
@@ -350,7 +354,7 @@ class Jogo {
 
     this.camera.atualizarPosicao(this.personagem.getPosition());
     this.renderer.draw(this.scene, this.camera.camera);
-    this.ui.updatePlayerHealth()
+    this.ui.updatePlayerHealth();
   };
 }
 

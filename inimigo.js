@@ -29,9 +29,9 @@ export default class Inimigo {
     this.forcaKnockback = 6;
     this.atritoKnockback = 8;
 
-    this.cooldownAtaque = 6.0; 
-    this.tempoDesdeUltimoAtaque = Math.random() * 2.0; 
-    this.distanciaDisparo = 15; 
+    this.cooldownAtaque = 6.0;
+    this.tempoDesdeUltimoAtaque = Math.random() * 2.0;
+    this.distanciaDisparo = 15;
 
     this.hitbox = new THREE.Box3();
     this.offsetHitbox = new THREE.Vector3(0, 0, 0);
@@ -170,7 +170,8 @@ export default class Inimigo {
       this.mixer.addEventListener("finished", (e) => {
         if (e.action === this.actions["Damage"]) this.terminarDano();
         else if (e.action === this.actions["Death"]) this.remover();
-        else if (e.action === this.actions["MagicAttack"]) this.terminarDisparo();
+        else if (e.action === this.actions["MagicAttack"])
+          this.terminarDisparo();
       });
 
       if (this.actions["Idle"]) {
@@ -215,7 +216,7 @@ export default class Inimigo {
       return;
     }
 
-    if(this.attackMode) return;
+    if (this.attackMode) return;
 
     const direcao = new THREE.Vector3();
     direcao.subVectors(target, this.inimigo.position);
@@ -261,7 +262,7 @@ export default class Inimigo {
     this.hitbox.max.copy(centro).add(metade);
   }
   terminarDisparo() {
-    this.attackMode = false; 
+    this.attackMode = false;
     this.mudarAnimacao("Idle");
   }
   dispararBolaDeFogo(alvoPos, listaProjeteis) {
@@ -284,7 +285,9 @@ export default class Inimigo {
       if (direcao.lengthSq() < 0.0001) return;
 
       const anguloDesvio = (Math.random() - 0.5) * Math.PI * 0.1;
-      direcao.applyAxisAngle(new THREE.Vector3(0, 1, 0), anguloDesvio).normalize();
+      direcao
+        .applyAxisAngle(new THREE.Vector3(0, 1, 0), anguloDesvio)
+        .normalize();
 
       listaProjeteis.push(new Projetil(this.scene, origem, direcao));
     }, ATRASO_MS);

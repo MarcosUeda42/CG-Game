@@ -279,25 +279,21 @@ export default class Personagem {
     this.ataqueAtivo =
       this.tempoAtaque >= passo.hitInicio && this.tempoAtaque <= passo.hitFim;
 
-    // direção para onde o personagem está virado (mesma convenção do atan2 do movimento)
     const ang = this.pivot.rotation.y;
     const sen = Math.sin(ang);
     const cos = Math.cos(ang);
 
-    // configuração do estado atual; se faltar algum campo, usa o padrão do construtor
     const cfg = passo.hitbox ?? {};
     const tamanhoAtaque = cfg.tamanho ?? this.tamanhoHitboxAtaque;
     const distancia = cfg.distancia ?? this.distanciaAtaque;
     const altura = cfg.altura ?? this.alturaAtaque;
     const lateral = cfg.lateral ?? 0;
 
-    // frente = (sen, 0, cos) | direita local = (cos, 0, -sen)
     const centro = this.pivot.position.clone();
     centro.x += sen * distancia + cos * lateral;
     centro.z += cos * distancia - sen * lateral;
     centro.y += altura;
 
-    // Box3 é alinhada aos eixos, então usamos a caixa que envolve o retângulo girado
     const { x: larg, y: alt, z: prof } = tamanhoAtaque;
     const tamanho = new THREE.Vector3(
       Math.abs(cos) * larg + Math.abs(sen) * prof,
@@ -307,7 +303,6 @@ export default class Personagem {
 
     this.hitboxAtaque.setFromCenterAndSize(centro, tamanho);
 
-    // fora da janela de acerto a caixa não existe (a não ser no modo debug)
     if (!this.ataqueAtivo && !this.debugHitbox) {
       this.hitboxAtaque.makeEmpty();
       if (this.hitboxAtaqueHelper) this.hitboxAtaqueHelper.visible = false;
@@ -411,10 +406,10 @@ export default class Personagem {
     this.atualizarHitbox();
     this.acompanharQuadril(this.passoMelee !== -1);
 
-    if (this.morto) return; // morto: só deixa a animação de morte tocar
+    if (this.morto) return;
 
     if (this.damageMode) {
-      this.atualizarDano(delta); // knockback; sem andar nem atacar
+      this.atualizarDano(delta);
       return;
     }
 
@@ -483,7 +478,8 @@ export default class Personagem {
       if (!this.hitboxAtaque.intersectsBox(inimigo.hitbox)) continue;
 
       inimigo.dano(passo.dano, this.pivot.position);
-      if (inimigo.dano(passo.dano, this.pivot.position)) this.alvosAtingidos.add(inimigo); // cada inimigo leva no máximo 1 dano por golpe
+      if (inimigo.dano(passo.dano, this.pivot.position))
+        this.alvosAtingidos.add(inimigo); // cada inimigo leva no máximo 1 dano por golpe
     }
   }
 }
