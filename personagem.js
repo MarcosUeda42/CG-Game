@@ -11,6 +11,7 @@ export default class Personagem {
     this.mixer = null;
     this.scene = scene;
     this.actions = {};
+    this.alvosAtingidos = new Set();
     this.health = health;
     this.currentAction = null;
     this.clock = new THREE.Clock();
@@ -224,6 +225,7 @@ export default class Personagem {
     }
   }
   iniciarAtaque(indice) {
+    this.alvosAtingidos.clear();
     const passo = this.meleeStates[indice];
     const acao = this.actions["Attack"];
 
@@ -254,7 +256,8 @@ export default class Personagem {
     this.tempoAtaque = 0;
     this.proximoSolicitado = false;
     this.acertou = false;
-    this.tempoRecarga = 0.2; // pequena pausa antes de reiniciar
+    this.tempoRecarga = 0.2;
+    this.alvosAtingidos.clear();
   }
   acompanharQuadril(aplicar) {
     const q = this.quadril;
@@ -364,35 +367,18 @@ export default class Personagem {
   getHealth() {
     return this.health;
   }
-  verificarAcerto(oponente) {
-    // só acerta com a hitbox de ataque ativa, e uma vez por golpe
-    if (!this.ataqueAtivo || this.acertou) return;
+  verificarAcerto(inimigos) {
+    if (!this.ataqueAtivo) return;
 
-    if (this.hitboxAtaque.intersectsBox(oponente.hitbox)) {
-      const passo = this.meleeStates[this.passoMelee];
-      oponente.dano(passo.dano, this.pivot.position);
-      this.acertou = true;
+    const passo = this.meleeStates[this.passoMelee];
+    const lista = Array.isArray(inimigos) ? inimigos : [inimigos];
+
+    for (const inimigo of lista) {
+      if (inimigo.isDead() || this.alvosAtingidos.has(inimigo)) continue;
+      if (!this.hitboxAtaque.intersectsBox(inimigo.hitbox)) continue;
+
+      inimigo.dano(passo.dano, this.pivot.position);
+      this.alvosAtingidos.add(inimigo); // cada inimigo leva no máximo 1 dano por golpe
     }
-  }
-  dano(valor, origem = null) {
-    if (this.health <= 0 || this.damageMode) return;
-
-    this.health = Math.max(0, this.health - valor);
-    this.desenharBarra();
-
-    if (this.health <= 0) return;
-
-    this.damageMode = true;
-
-    if (origem && this.inimigo) {
-      this.knockbackVel.subVectors(this.inimigo.position, origem).setY(0);
-
-      if (this.knockbackVel.lengthSq() > 0.0001)
-        this.knockbackVel.normalize().multiplyScalar(this.forcaKnockback);
-      else this.knockbackVel.set(0, 0, 0);
-    }
-
-    if (this.actions["Damage"]) this.mudarAnimacao("Damage");
-    else this.tempoDano = DURACAO_DANO_FALLBACK;
   }
 }

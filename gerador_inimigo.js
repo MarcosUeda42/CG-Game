@@ -1,4 +1,3 @@
-import * as THREE from "three";
 import Inimigo from "./inimigo.js";
 
 export default class GeradorInimigo{
