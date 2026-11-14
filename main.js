@@ -328,7 +328,7 @@ class Jogo {
       this.controles.teclas["KeyC"] = false;
     }
 
-    this.personagem.atualizar();
+    this.personagem.atualizar(this.camera);
 
     this.geradorInimigo.atualizar(delta, this.personagem.getPosition(), this.projeteis);
     for (const inimigo of this.geradorInimigo.inimigos) {
