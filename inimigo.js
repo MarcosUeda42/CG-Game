@@ -3,7 +3,7 @@ import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import Projetil from "./projetil.js";
 
 const ESCALA_MODELO = 0.01;
-const DURACAO_DANO_FALLBACK = 0.6; // segundos, usado se não existir a animação "Damage"
+const DURACAO_DANO_FALLBACK = 0.6;
 
 export default class Inimigo {
   constructor(url, scene, x, y, z, rotacaoY) {
@@ -22,6 +22,7 @@ export default class Inimigo {
     this.distanciaMinima = 2;
 
     this.damageMode = false;
+    this.attackMode = false;
     this.tempoDano = 0;
 
     this.knockbackVel = new THREE.Vector3();
@@ -159,10 +160,17 @@ export default class Inimigo {
         acaoMorte.clampWhenFinished = true;
       }
 
+      const acaoDisparo = this.actions["MagicAttack"];
+      if (acaoDisparo) {
+        acaoDisparo.setLoop(THREE.LoopOnce, 1);
+        acaoDisparo.clampWhenFinished = true;
+      }
+
       // quando a animação de dano termina, sai do damageMode
       this.mixer.addEventListener("finished", (e) => {
         if (e.action === this.actions["Damage"]) this.terminarDano();
         else if (e.action === this.actions["Death"]) this.remover();
+        else if (e.action === this.actions["MagicAttack"]) this.terminarDisparo();
       });
 
       if (this.actions["Idle"]) {
@@ -185,7 +193,6 @@ export default class Inimigo {
   }
 
   atualizar(target, delta, listaProjeteis) {
-
     if (this.mixer) this.mixer.update(delta);
 
     if (this.health <= 0) {
@@ -207,6 +214,8 @@ export default class Inimigo {
       this.atualizarHitbox();
       return;
     }
+
+    if(this.attackMode) return;
 
     const direcao = new THREE.Vector3();
     direcao.subVectors(target, this.inimigo.position);
@@ -251,20 +260,34 @@ export default class Inimigo {
     this.hitbox.min.copy(centro).sub(metade);
     this.hitbox.max.copy(centro).add(metade);
   }
-
+  terminarDisparo() {
+    this.attackMode = false; 
+    this.mudarAnimacao("Idle");
+  }
   dispararBolaDeFogo(alvoPos, listaProjeteis) {
-    const origem = this.inimigo.position.clone();
-    origem.y = 1;
+    const ATRASO_MS = 300; // tempo entre iniciar a animação e soltar a bola de fogo
 
-    const alvo = alvoPos.clone();
-    alvo.y = 1;
-    const direcao = new THREE.Vector3().subVectors(alvo, origem);
+    this.attackMode = true;
+    this.mudarAnimacao("MagicAttack");
 
-    const anguloDesvio = Math.random() * Math.PI * 0.05;
-    direcao.applyAxisAngle(new THREE.Vector3(0, 1, 0), anguloDesvio).normalize()
+    const alvoTravado = alvoPos.clone();
+    setTimeout(() => {
+      if (!this.attackMode || this.damageMode || this.health <= 0) return;
 
-    const projetil = new Projetil(this.scene, origem, direcao);
-    listaProjeteis.push(projetil);
+      const mao = this.inimigo.getObjectByName("mixamorigRightHand");
+      const origem = new THREE.Vector3();
+      if (mao) mao.getWorldPosition(origem);
+      else origem.copy(this.inimigo.position).setY(1);
+
+      const alvo = alvoTravado.setY(origem.y);
+      const direcao = new THREE.Vector3().subVectors(alvo, origem);
+      if (direcao.lengthSq() < 0.0001) return;
+
+      const anguloDesvio = (Math.random() - 0.5) * Math.PI * 0.1;
+      direcao.applyAxisAngle(new THREE.Vector3(0, 1, 0), anguloDesvio).normalize();
+
+      listaProjeteis.push(new Projetil(this.scene, origem, direcao));
+    }, ATRASO_MS);
   }
   isDead() {
     return this.health <= 0;
