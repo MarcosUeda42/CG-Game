@@ -312,10 +312,51 @@ class Jogo {
     this.cenario.renderizar();
     this.personagem.carregar();
     this.animar();
+    this.configurarPausa();
+  }
+
+  configurarPausa(){
+    const pauseMenu = document.getElementById("pause-menu");
+    const resumeButton = document.getElementById("resume-button");
+    const quitButton = document.getElementById("quit-button");
+    
+    const alternarPausa = () => {
+      this.pausado = !this.pausado;
+      if (this.pausado) {
+        pauseMenu.classList.remove("hidden");
+      } else {
+        pauseMenu.classList.add("hidden");
+      }
+    };
+
+    window.addEventListener("keydown", (e) => {
+      // Evita pausar se a tela de título ainda estiver visível (opcional)
+      const titleScreen = document.getElementById("title-screen");
+      const jogoRodando = titleScreen.classList.contains("hidden");
+
+      if (jogoRodando && (e.code === "Escape")) {
+        alternarPausa();
+      }
+    });
+
+    resumeButton.addEventListener("click", () => {
+      alternarPausa();
+    });
+
+    quitButton.addEventListener("click", () => {
+      window.location.reload();
+    });
   }
 
   animar = () => {
     requestAnimationFrame(this.animar);
+
+    if (this.pausado){
+      this.clock.getDelta();
+      return;
+    }
+      
+
     const delta = this.clock.getDelta();
 
     if (this.controles.teclas["KeyQ"])
@@ -358,5 +399,19 @@ class Jogo {
   };
 }
 
-const jogo = new Jogo();
-jogo.iniciar();
+window.addEventListener("DOMContentLoaded", () => {
+  const startButton = document.getElementById("start-button");
+  const titleScreen = document.getElementById("title-screen");
+  const healthBar = document.getElementById("health-bar");
+
+  startButton.addEventListener("click", () => {
+    // Esconde a tela de título
+    titleScreen.classList.add("hidden");
+
+    healthBar.classList.remove("hidden");
+
+    // Inicializa e inicia o jogo após o clique
+    const jogo = new Jogo();
+    jogo.iniciar();
+  });
+});
