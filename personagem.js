@@ -1,6 +1,8 @@
 import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 
+const DURACAO_DANO_FALLBACK = 0.5; // segundos, usado se não existir a animação "Damage"
+
 export default class Personagem {
   constructor(url, scene, controles, cenario, health = 100) {
     this.personagem = null;
@@ -11,19 +13,27 @@ export default class Personagem {
     this.mixer = null;
     this.scene = scene;
     this.actions = {};
-    this.alvosAtingidos = new Set();
     this.health = health;
+    this.healthMax = health;
     this.currentAction = null;
     this.clock = new THREE.Clock();
     this.velocidade = 3;
+
     this.damageMode = false;
+    this.morto = false;
+    this.tempoDano = 0;
+    this.knockbackVel = new THREE.Vector3();
+    this.forcaKnockback = 5;
+    this.atritoKnockback = 8;
+    this.aoMudarVida = null;
+
     this.meleeStates = [
       {
         inicio: 0.0,
         fim: 1.2,
         hitInicio: 0.7,
         hitFim: 1,
-        dano: 8,
+        dano: 50,
         hitbox: {
           tamanho: new THREE.Vector3(1.4, 1.6, 1.6),
           distancia: 1.4,
@@ -36,7 +46,7 @@ export default class Personagem {
         fim: 2.3,
         hitInicio: 0.7,
         hitFim: 1,
-        dano: 10,
+        dano: 70,
         hitbox: {
           tamanho: new THREE.Vector3(2.0, 1.6, 1.6),
           distancia: 1.4,
@@ -49,7 +59,7 @@ export default class Personagem {
         fim: 3.5,
         hitInicio: 0.5,
         hitFim: 0.7,
-        dano: 15,
+        dano: 70,
         hitbox: {
           tamanho: new THREE.Vector3(1.6, 1.8, 2.0),
           distancia: 1.6,
@@ -76,6 +86,7 @@ export default class Personagem {
     this.ataqueAtivo = false;
     this.acertou = false;
     this.debugHitbox = true;
+    this.alvosAtingidos = new Set();
 
     this.direcoes = {
       KeyW: new THREE.Vector3(0, 0, -1),
@@ -99,7 +110,7 @@ export default class Personagem {
       this.personagem.scale.setScalar(0.01);
       this.personagem.position.set(0, 1, 0.01);
 
-      this.pivot.position.set(1, 0.3, 1);
+      this.pivot.position.set(1, 0, 1);
       this.pivot.add(this.personagem);
 
       this.quadril = this.personagem.getObjectByName("mixamorigHips");
@@ -129,7 +140,94 @@ export default class Personagem {
 
       this.actions["Attack"].setLoop(THREE.LoopOnce);
       this.actions["Attack"].clampWhenFinished = true;
+
+      // dano e morte tocam uma vez e ficam no último frame
+      const acaoDano = this.actions["Damage"];
+      if (acaoDano) {
+        acaoDano.setLoop(THREE.LoopOnce, 1);
+        acaoDano.clampWhenFinished = true;
+      }
+
+      const acaoMorte = this.actions["Death"];
+      if (acaoMorte) {
+        acaoMorte.setLoop(THREE.LoopOnce, 1);
+        acaoMorte.clampWhenFinished = true;
+      }
+
+      // quando a animação de dano termina, sai do damageMode
+      this.mixer.addEventListener("finished", (e) => {
+        if (e.action === this.actions["Damage"]) this.terminarDano();
+      });
     });
+  }
+  dano(valor, origem = null) {
+    if (this.morto || this.damageMode || !this.personagem) return false;
+
+    this.health = Math.max(0, this.health - valor);
+    if (this.aoMudarVida) this.aoMudarVida(this.health);
+
+    this.resetarAtaque();
+    this.atualizarHitboxAtaque();
+
+    if (this.health <= 0) {
+      this.iniciarMorte();
+      return true;
+    }
+
+    this.damageMode = true;
+
+    this.knockbackVel.set(0, 0, 0);
+    if (origem) {
+      this.knockbackVel.subVectors(this.pivot.position, origem).setY(0);
+
+      if (this.knockbackVel.lengthSq() > 0.0001)
+        this.knockbackVel.normalize().multiplyScalar(this.forcaKnockback);
+      else this.knockbackVel.set(0, 0, 0);
+    }
+
+    if (this.actions["Damage"]) this.mudarAnimacao("Damage");
+    else {
+      this.tempoDano = DURACAO_DANO_FALLBACK;
+      this.mudarAnimacao("Idle"); // evita continuar tocando o ataque durante o stun
+    }
+
+    return true;
+  }
+  iniciarMorte() {
+    this.morto = true;
+    this.damageMode = false;
+    this.knockbackVel.set(0, 0, 0);
+
+    if (this.actions["Death"]) this.mudarAnimacao("Death");
+    else this.mudarAnimacao("Idle");
+  }
+  terminarDano() {
+    this.damageMode = false;
+    this.knockbackVel.set(0, 0, 0);
+    this.mudarAnimacao("Idle");
+  }
+  atualizarDano(delta) {
+    const anterior = this.pivot.position.clone();
+
+    this.pivot.position.addScaledVector(this.knockbackVel, delta);
+    this.knockbackVel.multiplyScalar(Math.exp(-this.atritoKnockback * delta));
+
+    // não deixa o empurrão atravessar as paredes
+    this.atualizarHitbox();
+    for (const parede of this.cenario.hitboxesParedes) {
+      if (this.hitbox.intersectsBox(parede)) {
+        this.pivot.position.copy(anterior);
+        this.pivot.updateMatrixWorld(true);
+        this.knockbackVel.set(0, 0, 0);
+        this.atualizarHitbox();
+        break;
+      }
+    }
+
+    if (!this.actions["Damage"]) {
+      this.tempoDano -= delta;
+      if (this.tempoDano <= 0) this.terminarDano();
+    }
   }
   ataque(delta) {
     if (this.tempoRecarga > 0) this.tempoRecarga -= delta;
@@ -252,12 +350,12 @@ export default class Personagem {
     }
   }
   resetarAtaque() {
+    this.alvosAtingidos.clear();
     this.passoMelee = -1;
     this.tempoAtaque = 0;
     this.proximoSolicitado = false;
     this.acertou = false;
-    this.tempoRecarga = 0.2;
-    this.alvosAtingidos.clear();
+    this.tempoRecarga = 0.2; // pequena pausa antes de reiniciar
   }
   acompanharQuadril(aplicar) {
     const q = this.quadril;
@@ -313,10 +411,17 @@ export default class Personagem {
     this.atualizarHitbox();
     this.acompanharQuadril(this.passoMelee !== -1);
 
+    if (this.morto) return; // morto: só deixa a animação de morte tocar
+
+    if (this.damageMode) {
+      this.atualizarDano(delta); // knockback; sem andar nem atacar
+      return;
+    }
+
     this.ataque(delta);
     this.atualizarHitboxAtaque();
 
-    if (this.passoMelee !== -1 || this.damageMode) return;
+    if (this.passoMelee !== -1) return;
 
     const frenteCamera = new THREE.Vector3();
     camera.camera.getWorldDirection(frenteCamera);
@@ -378,7 +483,7 @@ export default class Personagem {
       if (!this.hitboxAtaque.intersectsBox(inimigo.hitbox)) continue;
 
       inimigo.dano(passo.dano, this.pivot.position);
-      this.alvosAtingidos.add(inimigo); // cada inimigo leva no máximo 1 dano por golpe
+      if (inimigo.dano(passo.dano, this.pivot.position)) this.alvosAtingidos.add(inimigo); // cada inimigo leva no máximo 1 dano por golpe
     }
   }
 }

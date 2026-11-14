@@ -318,12 +318,10 @@ class Jogo {
     requestAnimationFrame(this.animar);
     const delta = this.clock.getDelta();
 
-    if (this.controles.teclas["KeyQ"]) {
+    if (this.controles.teclas["KeyQ"])
       this.camera.orbitarEsquerda(this.personagem.getPosition());
-    }
-    else if (this.controles.teclas["KeyE"]){
+    else if (this.controles.teclas["KeyE"])
       this.camera.orbitarDireita(this.personagem.getPosition());
-    }
 
     if (this.controles.teclas["KeyC"]) {
       this.camera.modo = (this.camera.modo + 1) % 2;
@@ -342,19 +340,17 @@ class Jogo {
       p.atualizar(delta);
 
       if (p.hitbox.intersectsBox(this.personagem.hitbox)) {
-        console.log("Jogador atingido por bola de fogo!");
+        this.personagem.dano(10, p);
         p.destruir();
         this.projeteis.splice(i, 1);
         continue;
       }
-      if (!p.ativo) {
-        this.projeteis.splice(i, 1);
-      }
+      if (!p.ativo) this.projeteis.splice(i, 1);
     }
 
     this.camera.atualizarPosicao(this.personagem.getPosition());
-
     this.renderer.draw(this.scene, this.camera.camera);
+    this.ui.updatePlayerHealth()
   };
 }
 
