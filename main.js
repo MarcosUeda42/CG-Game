@@ -294,15 +294,14 @@ class Jogo {
     // inicializa os controles
     this.controles = new Controles(this.renderer.getDOMElement());
 
-    this.ui = new UI();
     // inicializa o personagem
     this.personagem = new Personagem(
       "./personagem/model.glb",
       this.scene,
       this.controles,
       this.cenario,
-      this.ui,
     );
+    this.ui = new UI(this.personagem);
 
     this.inimigo1 = new Inimigo(
       "./inimigo/model.glb",
@@ -311,6 +310,7 @@ class Jogo {
       1.2,
       5,
       Math.PI,
+      this.ui,
     ); // rotação em 180
   }
   iniciar() {
@@ -339,8 +339,6 @@ class Jogo {
     this.camera.atualizarPosicao(this.personagem.getPosition());
 
     this.renderer.draw(this.scene, this.camera.camera);
-
-    this.ui.updateSpriteHealth(50, 100);
   };
 }
 

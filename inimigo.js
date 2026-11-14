@@ -2,9 +2,9 @@ import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 
 export default class Inimigo {
-  constructor(url, scene, x, y, z, rotacaoY) {
-    this.inimigo = null;
+  constructor(url, scene, x, y, z, rotacaoY, ui) {
     this.url = url;
+    this.inimigo = null;
     this.loader = new GLTFLoader();
     this.mixer = null;
     this.scene = scene;
@@ -16,13 +16,24 @@ export default class Inimigo {
     this.rotacaoY = rotacaoY;
     this.velocidade = 1.5;
     this.distanciaMinima = 2;
-    this.ativo = 1;
 
     this.hitbox = new THREE.Box3();
     this.offsetHitbox = new THREE.Vector3(0, 0, 0);
     this.tamanhoHitbox = new THREE.Vector3(0.6, 1.8, 0.6);
 
     this.actions = {};
+    this.ui = ui;
+    const texture = new THREE.CanvasTexture(this.ui.getCanvas());
+    this.spriteMaterial = new THREE.SpriteMaterial({ map: texture });
+    this.healthSprite = new THREE.Sprite(this.spriteMaterial);
+    this.healthSprite.scale.set(1.5, 0.2, 1);
+    this.healthSprite.position.set(0, 2.2, 0);
+
+    this.health = 100;
+  }
+  dano(health) {
+    this.health -= health;
+    this.ui.updateSpriteHealth(this.health);
   }
   mudarAnimacao(nome, duracao = 0.1) {
     const nextAction = this.actions[nome];
@@ -45,6 +56,10 @@ export default class Inimigo {
         this.inimigo = gltf.scene;
         this.inimigo.scale.setScalar(0.01);
         this.inimigo.position.set(this.posX, this.posY, this.posZ);
+        this.healthSprite.scale.set(1.5 / 0.01, 0.2 / 0.01, 1);
+        this.healthSprite.position.set(0, 110, 0);
+        this.ui.updateSpriteHealth(this.health);
+        this.inimigo.add(this.healthSprite);
 
         this.scene.add(this.inimigo);
 
@@ -63,17 +78,11 @@ export default class Inimigo {
           this.currentAction.play();
         }
       },
-      () => {
-        console.log("Carregando inimigo");
-      },
-      (erro) => {
-        console.error("Erro ao carregar inimigo:", erro);
-      },
     );
   }
   atualizar(target) {
     const delta = this.clock.getDelta();
-    if (!this.ativo) {
+    if (this.health <= 0) {
       this.scene.remove(this.inimigo);
       this.hitbox.makeEmpty();
       this.scene.remove(this.helper);
@@ -90,7 +99,6 @@ export default class Inimigo {
     direcao.y = 0;
 
     const distancia = direcao.length();
-
     if (distancia > this.distanciaMinima) {
       direcao.normalize();
 
@@ -110,7 +118,7 @@ export default class Inimigo {
     this.atualizarHitbox();
   }
   atualizarHitbox() {
-    if (!this.ativo) return;
+    if (this.health <= 0) return;
     const centro = this.inimigo.position.clone();
     centro.add(this.offsetHitbox);
 
@@ -118,5 +126,8 @@ export default class Inimigo {
 
     this.hitbox.min.copy(centro).sub(metade);
     this.hitbox.max.copy(centro).add(metade);
+  }
+  isDead() {
+    return this.health <= 0;
   }
 }

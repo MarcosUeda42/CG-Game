@@ -2,9 +2,8 @@ import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 
 export default class Personagem {
-  constructor(url, scene, controles, cenario, ui) {
+  constructor(url, scene, controles, cenario, health=100) {
     this.personagem = null;
-    this.ui = ui;
     this.url = url;
     this.controles = controles;
     this.cenario = cenario;
@@ -12,6 +11,7 @@ export default class Personagem {
     this.mixer = null;
     this.scene = scene;
     this.actions = {};
+    this.health = health;
     this.currentAction = null;
     this.clock = new THREE.Clock();
     this.velocidade = 3;
@@ -79,7 +79,6 @@ export default class Personagem {
 
         this.pivot.position.set(1, 0.3, 1);
         this.pivot.add(this.personagem);
-        this.pivot.add(this.ui.getSprite());
 
         this.quadril = this.personagem.getObjectByName("mixamorigHips");
         this.quadrilRepouso = this.quadril.position.clone();
@@ -108,16 +107,6 @@ export default class Personagem {
 
         this.actions["Attack"].setLoop(THREE.LoopOnce);
         this.actions["Attack"].clampWhenFinished = true;
-      },
-      (progresso) => {
-        if (progresso.total) {
-          console.log(
-            `Carregando: ${((progresso.loaded / progresso.total) * 100).toFixed(0)}%`,
-          );
-        }
-      },
-      (erro) => {
-        console.error("Erro ao carregar personagem:", erro);
       },
     );
   }
@@ -238,7 +227,7 @@ export default class Personagem {
     if (this.mixer) this.mixer.update(delta);
 
     if (!this.personagem) return;
-    this.correndo = this.controles.getKeyStatus("Space");
+    this.correndo = this.controles.getScrollState();
 
     const posicaoAnterior = new THREE.Vector3(
       this.pivot.position.x * 0.999,
@@ -287,11 +276,11 @@ export default class Personagem {
     if (this.personagem) return this.pivot.position;
     return new THREE.Vector3(0, 0, 0);
   }
+  getHealth() {
+    return this.health;
+  }
   verificarAcerto(oponente) {
-    if (!oponente.ativo) return;
-    if (this.hitboxSword.intersectsBox(oponente.hitbox)) {
-      oponente.ativo = 0;
-      console.log("acertou inimigo");
-    }
+    if (this.hitboxSword.intersectsBox(oponente.hitbox) && this.passoMelee !== -1)
+      oponente.dano(3);
   }
 }
