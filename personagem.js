@@ -294,7 +294,7 @@ export default class Personagem {
       this.currentAction.crossFadeTo(nextAction, duracao, true);
     this.currentAction = nextAction;
   }
-  atualizar() {
+  atualizar(camera) {
     const delta = this.clock.getDelta();
     if (this.mixer) this.mixer.update(delta);
 
@@ -315,9 +315,21 @@ export default class Personagem {
 
     if (this.passoMelee !== -1 || this.damageMode) return;
 
+    const frenteCamera = new THREE.Vector3();
+    camera.camera.getWorldDirection(frenteCamera);
+    frenteCamera.y = 0;
+    frenteCamera.normalize();
+
+    const direitaCamera = new THREE.Vector3();
+    direitaCamera
+      .crossVectors(frenteCamera, new THREE.Vector3(0, 1, 0))
+      .normalize();
+
     const direcao = new THREE.Vector3();
-    for (const tecla in this.direcoes)
-      if (this.controles.teclas[tecla]) direcao.add(this.direcoes[tecla]);
+    if (this.controles.teclas["KeyW"]) direcao.add(frenteCamera);
+    if (this.controles.teclas["KeyS"]) direcao.sub(frenteCamera);
+    if (this.controles.teclas["KeyD"]) direcao.add(direitaCamera);
+    if (this.controles.teclas["KeyA"]) direcao.sub(direitaCamera);
 
     if (direcao.lengthSq() > 0) {
       if (this.correndo) this.fatorCorrida = 1.5;

@@ -5,6 +5,7 @@ import Camera from "./camera.js";
 import Inimigo from "./inimigo.js";
 import Controles from "./controles.js";
 import Renderer from "./renderer.js";
+import GeradorInimigo from "./gerador_inimigo.js";
 import UI from "./ui.js";
 
 // classe do cenario, terreno + iluminação
@@ -303,38 +304,53 @@ class Jogo {
     );
     this.ui = new UI(this.personagem);
 
-    this.inimigo1 = new Inimigo(
-      "./inimigo/model.glb",
-      this.scene,
-      1,
-      1.2,
-      5,
-      Math.PI,
-      this.ui,
-    ); // rotação em 180
+    this.geradorInimigo = new GeradorInimigo(this.scene);
+    this.clock = new THREE.Clock();
+    this.projeteis = [];
   }
   iniciar() {
     this.cenario.renderizar();
-    this.inimigo1.carregar();
     this.personagem.carregar();
     this.animar();
   }
+
   animar = () => {
     requestAnimationFrame(this.animar);
-    // animação da câmera
-    if (this.controles.teclas["KeyQ"])
+    const delta = this.clock.getDelta();
+
+    if (this.controles.teclas["KeyQ"]) {
       this.camera.orbitarEsquerda(this.personagem.getPosition());
-    else if (this.controles.teclas["KeyE"])
+    }
+    else if (this.controles.teclas["KeyE"]){
       this.camera.orbitarDireita(this.personagem.getPosition());
+    }
 
-    if (this.controles.teclas["KeyC"])
+    if (this.controles.teclas["KeyC"]) {
       this.camera.modo = (this.camera.modo + 1) % 2;
-    this.controles.teclas["KeyC"] = false;
+      this.controles.teclas["KeyC"] = false;
+    }
 
-    this.personagem.atualizar();
-    this.personagem.verificarAcerto(this.inimigo1, this.scene);
-    // animação do inimigo
-    this.inimigo1.atualizar(this.personagem.getPosition());
+    this.personagem.atualizar(this.camera);
+
+    this.geradorInimigo.atualizar(delta, this.personagem.getPosition(), this.projeteis);
+    for (const inimigo of this.geradorInimigo.inimigos) {
+      this.personagem.verificarAcerto(inimigo, this.scene);
+    }
+
+    for (let i = this.projeteis.length - 1; i >= 0; i--) {
+      const p = this.projeteis[i];
+      p.atualizar(delta);
+
+      if (p.hitbox.intersectsBox(this.personagem.hitbox)) {
+        console.log("Jogador atingido por bola de fogo!");
+        p.destruir();
+        this.projeteis.splice(i, 1);
+        continue;
+      }
+      if (!p.ativo) {
+        this.projeteis.splice(i, 1);
+      }
+    }
 
     this.camera.atualizarPosicao(this.personagem.getPosition());
 

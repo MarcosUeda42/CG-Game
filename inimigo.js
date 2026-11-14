@@ -1,5 +1,6 @@
 import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+import Projetil from "./projetil.js";
 
 const ESCALA_MODELO = 0.01;
 const DURACAO_DANO_FALLBACK = 0.6; // segundos, usado se não existir a animação "Damage"
@@ -26,6 +27,10 @@ export default class Inimigo {
     this.knockbackVel = new THREE.Vector3();
     this.forcaKnockback = 6;
     this.atritoKnockback = 8;
+
+    this.cooldownAtaque = 6.0; 
+    this.tempoDesdeUltimoAtaque = Math.random() * 2.0; 
+    this.distanciaDisparo = 15; 
 
     this.hitbox = new THREE.Box3();
     this.offsetHitbox = new THREE.Vector3(0, 0, 0);
@@ -179,8 +184,7 @@ export default class Inimigo {
     this.spriteMaterial.dispose();
   }
 
-  atualizar(target) {
-    const delta = this.clock.getDelta();
+  atualizar(target, delta, listaProjeteis) {
 
     if (this.mixer) this.mixer.update(delta);
 
@@ -223,6 +227,16 @@ export default class Inimigo {
       this.mudarAnimacao("Run");
     } else this.mudarAnimacao("Idle");
 
+    this.tempoDesdeUltimoAtaque += delta;
+    const dist = this.inimigo.position.distanceTo(target);
+    if (
+      dist <= this.distanciaDisparo &&
+      this.tempoDesdeUltimoAtaque >= this.cooldownAtaque
+    ) {
+      this.dispararBolaDeFogo(target, listaProjeteis);
+      this.tempoDesdeUltimoAtaque = 0;
+    }
+
     this.atualizarHitbox();
   }
 
@@ -238,6 +252,20 @@ export default class Inimigo {
     this.hitbox.max.copy(centro).add(metade);
   }
 
+  dispararBolaDeFogo(alvoPos, listaProjeteis) {
+    const origem = this.inimigo.position.clone();
+    origem.y = 1;
+
+    const alvo = alvoPos.clone();
+    alvo.y = 1;
+    const direcao = new THREE.Vector3().subVectors(alvo, origem);
+
+    const anguloDesvio = Math.random() * Math.PI * 0.05;
+    direcao.applyAxisAngle(new THREE.Vector3(0, 1, 0), anguloDesvio).normalize()
+
+    const projetil = new Projetil(this.scene, origem, direcao);
+    listaProjeteis.push(projetil);
+  }
   isDead() {
     return this.health <= 0;
   }
