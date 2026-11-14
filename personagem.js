@@ -2,7 +2,7 @@ import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 
 export default class Personagem {
-  constructor(url, scene, controles, cenario) {
+  constructor(url, scene, controles, cenario, health = 100) {
     this.personagem = null;
     this.url = url;
     this.controles = controles;
@@ -11,6 +11,7 @@ export default class Personagem {
     this.mixer = null;
     this.scene = scene;
     this.actions = {};
+    this.health = health;
     this.currentAction = null;
     this.clock = new THREE.Clock();
     this.velocidade = 3;
@@ -18,27 +19,45 @@ export default class Personagem {
       {
         inicio: 0.0,
         fim: 1.2,
-        hitInicio: 0.2,
-        hitFim: 0.35, 
+        hitInicio: 0.7,
+        hitFim: 1,
         dano: 8,
+        hitbox: {
+          tamanho: new THREE.Vector3(1.4, 1.6, 1.6),
+          distancia: 1.4,
+          altura: 0.9,
+          lateral: 0,
+        },
       },
       {
         inicio: 1.4,
         fim: 2.3,
-        hitInicio: 0.85,
-        hitFim: 1.0,
+        hitInicio: 0.7,
+        hitFim: 1,
         dano: 10,
+        hitbox: {
+          tamanho: new THREE.Vector3(2.0, 1.6, 1.6), // golpe mais largo
+          distancia: 1.4,
+          altura: 0.9,
+          lateral: 0,
+        },
       },
       {
         inicio: 2.5,
         fim: 3.5,
-        hitInicio: 0.85,
-        hitFim: 1.0,
+        hitInicio: 0.5,
+        hitFim: 0.7,
         dano: 10,
+        hitbox: {
+          tamanho: new THREE.Vector3(1.6, 1.8, 2.0), // golpe final, mais longo
+          distancia: 1.6,
+          altura: 0.9,
+          lateral: 0,
+        },
       },
     ];
     this.tempoRecarga = 0;
-    this.passoMelee = -1;    
+    this.passoMelee = -1;
     this.velocidadeGiro = 10;
 
     this.hitbox = new THREE.Box3();
@@ -46,12 +65,16 @@ export default class Personagem {
     this.tamanhoHitbox = new THREE.Vector3(0.6, 1.8, 0.6);
     this.offsetHitbox = new THREE.Vector3(0, 0.9, 0);
 
-    this.hitboxSword = new THREE.Box3();
-    this.hitboxSwordHelper = null;
-    this.tamanhoHitboxSword = new THREE.Vector3(1.4, 0.6, 1.4);
-    this.offsetSword = new THREE.Vector3(0, 0, 0.5);
-    this.maoDireita = null;
-    
+    this.hitboxAtaque = new THREE.Box3();
+    this.hitboxAtaque.makeEmpty();
+    this.hitboxAtaqueHelper = null;
+    this.tamanhoHitboxAtaque = new THREE.Vector3(1.4, 1.6, 1.6);
+    this.distanciaAtaque = 1.4;
+    this.alturaAtaque = 0.9;
+    this.ataqueAtivo = false;
+    this.acertou = false;
+    this.debugHitbox = true;
+
     this.direcoes = {
       KeyW: new THREE.Vector3(0, 0, -1),
       KeyS: new THREE.Vector3(0, 0, 1),
@@ -66,61 +89,52 @@ export default class Personagem {
     this.resetarAtaque();
   }
   carregar() {
-    this.loader.load(
-      this.url,
-      (gltf) => {
-        this.pivot = new THREE.Group();
-        this.scene.add(this.pivot);
+    this.loader.load(this.url, (gltf) => {
+      this.pivot = new THREE.Group();
+      this.scene.add(this.pivot);
 
-        this.personagem = gltf.scene;
-        this.personagem.scale.setScalar(0.01);
-        this.personagem.position.set(0, 1, 0.01);
+      this.personagem = gltf.scene;
+      this.personagem.scale.setScalar(0.01);
+      this.personagem.position.set(0, 1, 0.01);
 
-        this.pivot.position.set(1, 0.3, 1);
-        this.pivot.add(this.personagem);
-        
-        this.quadril = this.personagem.getObjectByName("mixamorigHips");
-        this.quadrilRepouso = this.quadril.position.clone();
-        this._offX = null;
-        this._offZ = null;
-        this._wA = new THREE.Vector3();
-        this._wR = new THREE.Vector3();
+      this.pivot.position.set(1, 0.3, 1);
+      this.pivot.add(this.personagem);
 
-        const helper = new THREE.AxesHelper(2);
-        this.pivot.add(helper);        
+      this.quadril = this.personagem.getObjectByName("mixamorigHips");
+      this.quadrilRepouso = this.quadril.position.clone();
+      this._offX = null;
+      this._offZ = null;
+      this._wA = new THREE.Vector3();
+      this._wR = new THREE.Vector3();
 
-        this.hitboxHelper = new THREE.Box3Helper(this.hitbox, 0xff0000);
-        this.hitboxSwordHelper = new THREE.Box3Helper(this.hitboxSword, 0xff0000);
-        this.scene.add(this.hitboxHelper);
-        this.scene.add(this.hitboxSwordHelper);
+      const helper = new THREE.AxesHelper(2);
+      this.pivot.add(helper);
 
-        this.maoDireita = this.personagem.getObjectByName("mixamorigRightHand");
+      this.hitboxHelper = new THREE.Box3Helper(this.hitbox, 0xff0000);
+      this.scene.add(this.hitboxHelper);
 
-        this.mixer = new THREE.AnimationMixer(this.personagem);
-        gltf.animations.forEach((clip) => {
-          this.actions[clip.name] = this.mixer.clipAction(clip);
-        });
+      this.hitboxAtaqueHelper = new THREE.Box3Helper(
+        this.hitboxAtaque,
+        0xffff00,
+      );
+      this.hitboxAtaqueHelper.visible = false;
+      this.scene.add(this.hitboxAtaqueHelper);
 
-        this.actions["Attack"].setLoop(THREE.LoopOnce);
-        this.actions["Attack"].clampWhenFinished = true;
-      },
-      (progresso) => {
-        if (progresso.total) {
-          console.log(
-            `Carregando: ${((progresso.loaded / progresso.total) * 100).toFixed(0)}%`,
-          );
-        }
-      },
-      (erro) => {
-        console.error("Erro ao carregar personagem:", erro);
-      },
-    );
+      this.mixer = new THREE.AnimationMixer(this.personagem);
+      gltf.animations.forEach((clip) => {
+        this.actions[clip.name] = this.mixer.clipAction(clip);
+      });
+
+      this.actions["Attack"].setLoop(THREE.LoopOnce);
+      this.actions["Attack"].clampWhenFinished = true;
+    });
   }
   ataque(delta) {
     if (this.tempoRecarga > 0) this.tempoRecarga -= delta;
 
     if (this.passoMelee === -1) {
-      if (this.controles.getMouseState() && this.tempoRecarga <= 0) this.iniciarAtaque(0);
+      if (this.controles.getMouseState() && this.tempoRecarga <= 0)
+        this.iniciarAtaque(0);
       return;
     }
 
@@ -128,17 +142,15 @@ export default class Personagem {
     const duracao = passo.fim - passo.inicio;
     this.tempoAtaque += delta;
 
-    const tClip = passo.inicio + this.tempoAtaque;
-
-    if (this.controles.getMouseState() && tClip >= passo.hitInicio) this.proximoSolicitado = true;
+    if (this.controles.getMouseState() && this.tempoAtaque >= passo.hitInicio)
+      this.proximoSolicitado = true;
 
     if (this.tempoAtaque >= duracao) {
       const temProximo = this.passoMelee + 1 < this.meleeStates.length;
 
       if (this.proximoSolicitado && temProximo)
         this.iniciarAtaque(this.passoMelee + 1);
-      else if (this.tempoAtaque >= duracao)
-        this.resetarAtaque();
+      else if (this.tempoAtaque >= duracao) this.resetarAtaque();
     }
   }
   atualizarHitbox() {
@@ -149,19 +161,66 @@ export default class Personagem {
 
     this.hitbox.min.copy(centro).sub(metade);
     this.hitbox.max.copy(centro).add(metade);
+  }
+  // Cria a hitbox de ataque na frente do personagem durante a janela de acerto
+  // e a esvazia fora dela.
+  atualizarHitboxAtaque() {
+    this.ataqueAtivo = false;
 
-    if (!this.maoDireita) return;
+    if (this.passoMelee === -1) {
+      this.hitboxAtaque.makeEmpty();
+      if (this.hitboxAtaqueHelper) this.hitboxAtaqueHelper.visible = false;
+      return;
+    }
 
-    this.personagem.updateMatrixWorld(true);
+    const passo = this.meleeStates[this.passoMelee];
 
-    const posicaoMao = this.maoDireita.localToWorld(
-      this.offsetSword.clone()
+    // hitInicio/hitFim são em segundos desde o início do golpe (tempoAtaque)
+    this.ataqueAtivo =
+      this.tempoAtaque >= passo.hitInicio && this.tempoAtaque <= passo.hitFim;
+
+    // direção para onde o personagem está virado (mesma convenção do atan2 do movimento)
+    const ang = this.pivot.rotation.y;
+    const sen = Math.sin(ang);
+    const cos = Math.cos(ang);
+
+    // configuração do estado atual; se faltar algum campo, usa o padrão do construtor
+    const cfg = passo.hitbox ?? {};
+    const tamanhoAtaque = cfg.tamanho ?? this.tamanhoHitboxAtaque;
+    const distancia = cfg.distancia ?? this.distanciaAtaque;
+    const altura = cfg.altura ?? this.alturaAtaque;
+    const lateral = cfg.lateral ?? 0;
+
+    // frente = (sen, 0, cos) | direita local = (cos, 0, -sen)
+    const centro = this.pivot.position.clone();
+    centro.x += sen * distancia + cos * lateral;
+    centro.z += cos * distancia - sen * lateral;
+    centro.y += altura;
+
+    // Box3 é alinhada aos eixos, então usamos a caixa que envolve o retângulo girado
+    const { x: larg, y: alt, z: prof } = tamanhoAtaque;
+    const tamanho = new THREE.Vector3(
+      Math.abs(cos) * larg + Math.abs(sen) * prof,
+      alt,
+      Math.abs(sen) * larg + Math.abs(cos) * prof,
     );
 
-    this.hitboxSword.setFromCenterAndSize(
-      posicaoMao,
-      this.tamanhoHitboxSword
-    );
+    this.hitboxAtaque.setFromCenterAndSize(centro, tamanho);
+
+    // fora da janela de acerto a caixa não existe (a não ser no modo debug)
+    if (!this.ataqueAtivo && !this.debugHitbox) {
+      this.hitboxAtaque.makeEmpty();
+      if (this.hitboxAtaqueHelper) this.hitboxAtaqueHelper.visible = false;
+      return;
+    }
+
+    if (this.hitboxAtaqueHelper) {
+      this.hitboxAtaqueHelper.visible = true;
+      // amarelo = ativa (pode acertar) | cinza = só mostrando a posição
+      this.hitboxAtaqueHelper.material.color.setHex(
+        this.ataqueAtivo ? 0xffff00 : 0x888888,
+      );
+    }
   }
   iniciarAtaque(indice) {
     const passo = this.meleeStates[indice];
@@ -169,8 +228,9 @@ export default class Personagem {
 
     this.passoMelee = indice;
     this.tempoAtaque = 0;
-    
+
     this.proximoSolicitado = false;
+    this.acertou = false; // novo golpe, pode acertar de novo
     this._offX = null;
     this._offZ = null;
 
@@ -184,8 +244,7 @@ export default class Personagem {
       acao.time = passo.inicio;
       acao.enabled = true;
       acao.play();
-      if (this.currentAction) 
-        this.currentAction.crossFadeTo(acao, 0.3, true);
+      if (this.currentAction) this.currentAction.crossFadeTo(acao, 0.3, true);
       this.currentAction = acao;
     }
   }
@@ -193,6 +252,7 @@ export default class Personagem {
     this.passoMelee = -1;
     this.tempoAtaque = 0;
     this.proximoSolicitado = false;
+    this.acertou = false;
     this.tempoRecarga = 0.2; // pequena pausa antes de reiniciar
   }
   acompanharQuadril(aplicar) {
@@ -229,7 +289,8 @@ export default class Personagem {
     nextAction.setEffectiveWeight(1);
     nextAction.play();
 
-    if (this.currentAction) this.currentAction.crossFadeTo(nextAction, duracao, true);
+    if (this.currentAction)
+      this.currentAction.crossFadeTo(nextAction, duracao, true);
     this.currentAction = nextAction;
   }
   atualizar(camera) {
@@ -237,54 +298,54 @@ export default class Personagem {
     if (this.mixer) this.mixer.update(delta);
 
     if (!this.personagem) return;
-    this.correndo = this.controles.getKeyStatus("Space");
-    
+    this.correndo = this.controles.getScrollState();
+
     const posicaoAnterior = new THREE.Vector3(
-      this.pivot.position.x * 0.999, 
-      this.pivot.position.y, 
-      this.pivot.position.z * 0.999
+      this.pivot.position.x * 0.999,
+      this.pivot.position.y,
+      this.pivot.position.z * 0.999,
     );
 
     this.atualizarHitbox();
     this.acompanharQuadril(this.passoMelee !== -1);
 
     this.ataque(delta);
+    this.atualizarHitboxAtaque();
 
     if (this.passoMelee !== -1) return;
 
     const frenteCamera = new THREE.Vector3();
     camera.camera.getWorldDirection(frenteCamera);
-    frenteCamera.y = 0; 
+    frenteCamera.y = 0;
     frenteCamera.normalize();
 
     const direitaCamera = new THREE.Vector3();
-    direitaCamera.crossVectors(frenteCamera, new THREE.Vector3(0, 1, 0)).normalize();
+    direitaCamera
+      .crossVectors(frenteCamera, new THREE.Vector3(0, 1, 0))
+      .normalize();
 
     const direcao = new THREE.Vector3();
-
     if (this.controles.teclas["KeyW"]) direcao.add(frenteCamera);
     if (this.controles.teclas["KeyS"]) direcao.sub(frenteCamera);
     if (this.controles.teclas["KeyD"]) direcao.add(direitaCamera);
     if (this.controles.teclas["KeyA"]) direcao.sub(direitaCamera);
-    
+
     if (direcao.lengthSq() > 0) {
-      if(this.correndo) this.fatorCorrida = 1.5;
+      if (this.correndo) this.fatorCorrida = 1.5;
       else this.fatorCorrida = 1;
 
       const passo = this.velocidade * this.fatorCorrida * delta;
       direcao.normalize();
       this.pivot.position.addScaledVector(direcao, passo);
       const alvo = Math.atan2(direcao.x, direcao.z);
-      
+
       let diferenca = alvo - this.pivot.rotation.y;
       diferenca = Math.atan2(Math.sin(diferenca), Math.cos(diferenca));
 
       const fator = 1 - Math.exp(-this.velocidadeGiro * delta);
       this.pivot.rotation.y += diferenca * fator;
-      
-      this.mudarAnimacao(
-        this.correndo ? "Run" : "Walk"
-      );
+
+      this.mudarAnimacao(this.correndo ? "Run" : "Walk");
     } else this.mudarAnimacao("Idle");
 
     for (const parede of this.cenario.hitboxesParedes) {
@@ -295,15 +356,21 @@ export default class Personagem {
       }
     }
   }
-  getPosition(){
+  getPosition() {
     if (this.personagem) return this.pivot.position;
     return new THREE.Vector3(0, 0, 0);
   }
+  getHealth() {
+    return this.health;
+  }
   verificarAcerto(oponente) {
-    if(!oponente.ativo) return
-    if (this.hitboxSword.intersectsBox(oponente.hitbox)) {
-      oponente.ativo = 0;
-      console.log("acertou inimigo")
+    // só acerta com a hitbox de ataque ativa, e uma vez por golpe
+    if (!this.ataqueAtivo || this.acertou) return;
+
+    if (this.hitboxAtaque.intersectsBox(oponente.hitbox)) {
+      const passo = this.meleeStates[this.passoMelee];
+      oponente.dano(passo.dano, this.pivot.position);
+      this.acertou = true;
     }
   }
 }

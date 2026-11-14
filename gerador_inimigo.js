@@ -24,10 +24,9 @@ export default class GeradorInimigo{
         for (let i = 0; i < this.inimigos.length ; i++){
             const inimigo = this.inimigos[i];
 
-            if(!inimigo.ativo){
-                inimigo.remover();
-                this.inimigos.splice(i,1);
-                continue
+            if (inimigo.removido) {
+                this.inimigos.splice(i, 1);
+                continue;
             }
             inimigo.atualizar(posJogador, delta, listaProjeteis);
         }

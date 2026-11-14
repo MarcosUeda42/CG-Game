@@ -2,6 +2,7 @@ export default class Controles {
   constructor(canvas = null) {
     this.teclas = {};
     this.mousePressionado = false;
+    this.scrollPressionado = false;
 
     window.focus();
 
@@ -13,8 +14,14 @@ export default class Controles {
     window.addEventListener("keyup", (e) => {
       this.teclas[e.code] = false;
     });
-    window.addEventListener("mousedown", () => (this.mousePressionado = true));
-    window.addEventListener("mouseup", () => (this.mousePressionado = false));
+    window.addEventListener("mousedown", (e) => {
+      if (e.button === 0) this.mousePressionado = true;
+      else if (e.button === 1) this.scrollPressionado = true;
+    });
+    window.addEventListener("mouseup", (e) => {
+      if (e.button === 0) this.mousePressionado = false;
+      else if (e.button === 1) this.scrollPressionado = false;
+    });
 
     window.addEventListener("blur", () => {
       this.teclas = {};
@@ -30,6 +37,10 @@ export default class Controles {
 
   getMouseState() {
     return this.mousePressionado;
+  }
+
+  getScrollState() {
+    return this.scrollPressionado;
   }
 
   getKeyStatus(key) {

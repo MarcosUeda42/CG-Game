@@ -6,6 +6,7 @@ import Inimigo from "./inimigo.js";
 import Controles from "./controles.js";
 import Renderer from "./renderer.js";
 import GeradorInimigo from "./gerador_inimigo.js";
+import UI from "./ui.js";
 
 // classe do cenario, terreno + iluminação
 class Cenario {
@@ -301,12 +302,12 @@ class Jogo {
       this.controles,
       this.cenario,
     );
+    this.ui = new UI(this.personagem);
 
     this.geradorInimigo = new GeradorInimigo(this.scene);
     this.clock = new THREE.Clock();
     this.projeteis = [];
   }
-
   iniciar() {
     this.cenario.renderizar();
     this.personagem.carregar();
@@ -319,7 +320,8 @@ class Jogo {
 
     if (this.controles.teclas["KeyQ"]) {
       this.camera.orbitarEsquerda(this.personagem.getPosition());
-    } else if (this.controles.teclas["KeyE"]) {
+    }
+    else if (this.controles.teclas["KeyE"]){
       this.camera.orbitarDireita(this.personagem.getPosition());
     }
 
