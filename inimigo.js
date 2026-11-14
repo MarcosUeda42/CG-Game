@@ -2,6 +2,7 @@ import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 
 const ESCALA_MODELO = 0.01;
+const DURACAO_DANO_FALLBACK = 0.6; // segundos, usado se não existir a animação "Damage"
 
 export default class Inimigo {
   constructor(url, scene, x, y, z, rotacaoY) {
@@ -19,18 +20,23 @@ export default class Inimigo {
     this.velocidade = 1.5;
     this.distanciaMinima = 2;
 
+    this.damageMode = false;
+    this.tempoDano = 0;
+
+    this.knockbackVel = new THREE.Vector3();
+    this.forcaKnockback = 6;
+    this.atritoKnockback = 8;
+
     this.hitbox = new THREE.Box3();
     this.offsetHitbox = new THREE.Vector3(0, 0, 0);
     this.tamanhoHitbox = new THREE.Vector3(0.6, 1.8, 0.6);
 
     this.actions = {};
 
-    // vida
     this.health = 100;
     this.healthMax = 100;
     this.removido = false;
 
-    // barra de vida: cada inimigo tem o próprio canvas e textura
     this.canvas = document.createElement("canvas");
     this.canvas.width = 256;
     this.canvas.height = 32;
@@ -42,13 +48,11 @@ export default class Inimigo {
     this.spriteMaterial = new THREE.SpriteMaterial({
       map: this.texture,
       transparent: true,
-      depthTest: false, // sempre visível, mesmo dentro do modelo
+      depthTest: false,
     });
     this.healthSprite = new THREE.Sprite(this.spriteMaterial);
     this.healthSprite.renderOrder = 999;
 
-    // a sprite será filha do modelo (escala 0.01), então compensamos a escala
-    // tamanho no mundo: 1.5 x 0.19 | altura no mundo: 2.0
     this.healthSprite.scale.set(1.5 / ESCALA_MODELO, 0.19 / ESCALA_MODELO, 1);
     this.healthSprite.position.set(0, 1.0 / ESCALA_MODELO, 0); // ajuste a altura aqui
 
@@ -78,10 +82,36 @@ export default class Inimigo {
     this.texture.needsUpdate = true; // envia o novo desenho para a GPU
   }
 
-  dano(valor) {
-    if (this.health <= 0) return;
+  // origem: posição (Vector3) de quem causou o dano, usada para a direção do knockback
+  dano(valor, origem = null) {
+    // morto ou em damageMode: não toma dano
+    if (this.health <= 0 || this.damageMode) return;
+
     this.health = Math.max(0, this.health - valor);
     this.desenharBarra();
+
+    if (this.health <= 0) return;
+
+    this.damageMode = true;
+
+    if (origem && this.inimigo) {
+      this.knockbackVel
+        .subVectors(this.inimigo.position, origem)
+        .setY(0);
+
+      if (this.knockbackVel.lengthSq() > 0.0001)
+        this.knockbackVel.normalize().multiplyScalar(this.forcaKnockback);
+      else this.knockbackVel.set(0, 0, 0);
+    }
+
+    if (this.actions["Damage"]) this.mudarAnimacao("Damage");
+    else this.tempoDano = DURACAO_DANO_FALLBACK;
+  }
+
+  terminarDano() {
+    this.damageMode = false;
+    this.knockbackVel.set(0, 0, 0);
+    this.mudarAnimacao("Idle");
   }
 
   mudarAnimacao(nome, duracao = 0.1) {
@@ -116,6 +146,24 @@ export default class Inimigo {
         this.actions[clip.name] = this.mixer.clipAction(clip);
       });
 
+      const acaoDano = this.actions["Damage"];
+      if (acaoDano) {
+        acaoDano.setLoop(THREE.LoopOnce, 1);
+        acaoDano.clampWhenFinished = true;
+      }
+
+      const acaoMorte = this.actions["Death"];
+      if (acaoMorte) {
+        acaoMorte.setLoop(THREE.LoopOnce, 1);
+        acaoMorte.clampWhenFinished = true;
+      }
+
+      // quando a animação de dano termina, sai do damageMode
+      this.mixer.addEventListener("finished", (e) => {
+        if (e.action === this.actions["Damage"]) this.terminarDano();
+        else if (e.action === this.actions["Death"]) this.remover();
+      });
+
       if (this.actions["Idle"]) {
         this.currentAction = this.actions["Idle"];
         this.currentAction.play();
@@ -131,7 +179,6 @@ export default class Inimigo {
     if (this.helper) this.scene.remove(this.helper);
     this.hitbox.makeEmpty();
 
-    // libera memória da GPU
     this.texture.dispose();
     this.spriteMaterial.dispose();
   }
@@ -139,13 +186,27 @@ export default class Inimigo {
   atualizar(target) {
     const delta = this.clock.getDelta();
 
+    if (this.mixer) this.mixer.update(delta);
+
     if (this.health <= 0) {
-      this.remover();
+      this.spriteMaterial.visible = false;
+      this.mudarAnimacao("Death");
       return;
     }
 
-    if (this.mixer) this.mixer.update(delta);
     if (!this.inimigo || !target) return;
+
+    if (this.damageMode) {
+      if (!this.actions["Damage"]) {
+        this.tempoDano -= delta;
+        if (this.tempoDano <= 0) this.terminarDano();
+      }
+      this.inimigo.position.addScaledVector(this.knockbackVel, delta);
+      this.knockbackVel.multiplyScalar(Math.exp(-this.atritoKnockback * delta));
+
+      this.atualizarHitbox();
+      return;
+    }
 
     const direcao = new THREE.Vector3();
     direcao.subVectors(target, this.inimigo.position);
