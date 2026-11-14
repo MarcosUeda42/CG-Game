@@ -95,9 +95,7 @@ export default class Inimigo {
     this.damageMode = true;
 
     if (origem && this.inimigo) {
-      this.knockbackVel
-        .subVectors(this.inimigo.position, origem)
-        .setY(0);
+      this.knockbackVel.subVectors(this.inimigo.position, origem).setY(0);
 
       if (this.knockbackVel.lengthSq() > 0.0001)
         this.knockbackVel.normalize().multiplyScalar(this.forcaKnockback);
