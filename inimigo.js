@@ -1,10 +1,14 @@
 import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+import Projetil from "./projetil.js";
+
+const ESCALA_MODELO = 0.01;
+const DURACAO_DANO_FALLBACK = 0.6;
 
 export default class Inimigo {
   constructor(url, scene, x, y, z, rotacaoY) {
-    this.inimigo = null;
     this.url = url;
+    this.inimigo = null;
     this.loader = new GLTFLoader();
     this.mixer = null;
     this.scene = scene;
@@ -16,14 +20,102 @@ export default class Inimigo {
     this.rotacaoY = rotacaoY;
     this.velocidade = 1.5;
     this.distanciaMinima = 2;
-    this.ativo = 1;
+
+    this.damageMode = false;
+    this.attackMode = false;
+    this.tempoDano = 0;
+
+    this.knockbackVel = new THREE.Vector3();
+    this.forcaKnockback = 6;
+    this.atritoKnockback = 8;
+
+    this.cooldownAtaque = 6.0;
+    this.tempoDesdeUltimoAtaque = Math.random() * 2.0;
+    this.distanciaDisparo = 15;
 
     this.hitbox = new THREE.Box3();
     this.offsetHitbox = new THREE.Vector3(0, 0, 0);
     this.tamanhoHitbox = new THREE.Vector3(0.6, 1.8, 0.6);
 
     this.actions = {};
+
+    this.health = 100;
+    this.healthMax = 100;
+    this.removido = false;
+
+    this.canvas = document.createElement("canvas");
+    this.canvas.width = 256;
+    this.canvas.height = 32;
+    this.ctx = this.canvas.getContext("2d");
+
+    this.texture = new THREE.CanvasTexture(this.canvas);
+    this.texture.colorSpace = THREE.SRGBColorSpace;
+
+    this.spriteMaterial = new THREE.SpriteMaterial({
+      map: this.texture,
+      transparent: true,
+      depthTest: false,
+    });
+    this.healthSprite = new THREE.Sprite(this.spriteMaterial);
+    this.healthSprite.renderOrder = 999;
+
+    this.healthSprite.scale.set(1.5 / ESCALA_MODELO, 0.19 / ESCALA_MODELO, 1);
+    this.healthSprite.position.set(0, 1.0 / ESCALA_MODELO, 0); // ajuste a altura aqui
+
+    this.desenharBarra();
   }
+
+  desenharBarra() {
+    const { ctx, canvas } = this;
+    const ratio = Math.max(0, this.health) / this.healthMax;
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // fundo
+    ctx.fillStyle = "#333333";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // preenchimento
+    ctx.fillStyle =
+      ratio > 0.5 ? "#00ff00" : ratio > 0.25 ? "#fb8c00" : "#ff0000";
+    ctx.fillRect(0, 0, canvas.width * ratio, canvas.height);
+
+    // borda
+    ctx.strokeStyle = "#ffffff";
+    ctx.lineWidth = 2;
+    ctx.strokeRect(1, 1, canvas.width - 2, canvas.height - 2);
+
+    this.texture.needsUpdate = true; // envia o novo desenho para a GPU
+  }
+
+  dano(valor, origem = null) {
+    if (this.health <= 0 || this.damageMode) return;
+
+    this.health = Math.max(0, this.health - valor);
+    this.desenharBarra();
+
+    if (this.health <= 0) return;
+
+    this.damageMode = true;
+
+    if (origem && this.inimigo) {
+      this.knockbackVel.subVectors(this.inimigo.position, origem).setY(0);
+
+      if (this.knockbackVel.lengthSq() > 0.0001)
+        this.knockbackVel.normalize().multiplyScalar(this.forcaKnockback);
+      else this.knockbackVel.set(0, 0, 0);
+    }
+
+    if (this.actions["Damage"]) this.mudarAnimacao("Damage");
+    else this.tempoDano = DURACAO_DANO_FALLBACK;
+  }
+
+  terminarDano() {
+    this.damageMode = false;
+    this.knockbackVel.set(0, 0, 0);
+    this.mudarAnimacao("Idle");
+  }
+
   mudarAnimacao(nome, duracao = 0.1) {
     const nextAction = this.actions[nome];
     if (!nextAction || nextAction === this.currentAction) return;
@@ -34,58 +126,100 @@ export default class Inimigo {
     nextAction.setEffectiveWeight(1);
     nextAction.play();
 
-    if (this.currentAction) this.currentAction.crossFadeTo(nextAction, duracao, true);
+    if (this.currentAction)
+      this.currentAction.crossFadeTo(nextAction, duracao, true);
     this.currentAction = nextAction;
   }
+
   carregar() {
-    this.loader.load(
-      this.url,
-      (gltf) => {
-        this.inimigo = gltf.scene;
-        this.inimigo.scale.setScalar(0.01);
-        this.inimigo.position.set(this.posX, this.posY, this.posZ);
+    this.loader.load(this.url, (gltf) => {
+      this.inimigo = gltf.scene;
+      this.inimigo.scale.setScalar(ESCALA_MODELO);
+      this.inimigo.position.set(this.posX, this.posY, this.posZ);
+      this.inimigo.add(this.healthSprite);
 
-        this.scene.add(this.inimigo);
+      this.scene.add(this.inimigo);
 
-        this.hitbox = new THREE.Box3();
+      this.helper = new THREE.Box3Helper(this.hitbox, 0xff0000);
+      this.scene.add(this.helper);
 
-        this.helper = new THREE.Box3Helper(this.hitbox, 0xff0000);
-        this.scene.add(this.helper);
+      this.mixer = new THREE.AnimationMixer(this.inimigo);
+      gltf.animations.forEach((clip) => {
+        this.actions[clip.name] = this.mixer.clipAction(clip);
+      });
 
-        this.mixer = new THREE.AnimationMixer(this.inimigo);
-        gltf.animations.forEach((clip) => {
-          this.actions[clip.name] = this.mixer.clipAction(clip);
-        });
+      const acaoDano = this.actions["Damage"];
+      if (acaoDano) {
+        acaoDano.setLoop(THREE.LoopOnce, 1);
+        acaoDano.clampWhenFinished = true;
+      }
 
-        if (this.actions["Idle"]) {
-          this.currentAction = this.actions["Idle"];
-          this.currentAction.play();
-        }
-      },
-      () => {
-        console.log("Carregando inimigo");
-      },
-      (erro) => {
-        console.error("Erro ao carregar inimigo:", erro);
-      },
-    );
+      const acaoMorte = this.actions["Death"];
+      if (acaoMorte) {
+        acaoMorte.setLoop(THREE.LoopOnce, 1);
+        acaoMorte.clampWhenFinished = true;
+      }
+
+      const acaoDisparo = this.actions["MagicAttack"];
+      if (acaoDisparo) {
+        acaoDisparo.setLoop(THREE.LoopOnce, 1);
+        acaoDisparo.clampWhenFinished = true;
+      }
+
+      // quando a animação de dano termina, sai do damageMode
+      this.mixer.addEventListener("finished", (e) => {
+        if (e.action === this.actions["Damage"]) this.terminarDano();
+        else if (e.action === this.actions["Death"]) this.remover();
+        else if (e.action === this.actions["MagicAttack"])
+          this.terminarDisparo();
+      });
+
+      if (this.actions["Idle"]) {
+        this.currentAction = this.actions["Idle"];
+        this.currentAction.play();
+      }
+    });
   }
-  atualizar(target) {
-    const delta = this.clock.getDelta();
-    if(!this.ativo){
-      this.scene.remove(this.inimigo)
-      this.hitbox.makeEmpty();
-      this.scene.remove(this.helper)
-      return
-    } 
 
+  remover() {
+    if (this.removido) return;
+    this.removido = true;
+
+    if (this.inimigo) this.scene.remove(this.inimigo); // a sprite sai junto
+    if (this.helper) this.scene.remove(this.helper);
+    this.hitbox.makeEmpty();
+
+    this.texture.dispose();
+    this.spriteMaterial.dispose();
+  }
+
+  atualizar(target, delta, listaProjeteis) {
     if (this.mixer) this.mixer.update(delta);
+
+    if (this.health <= 0) {
+      this.spriteMaterial.visible = false;
+      this.mudarAnimacao("Death");
+      return;
+    }
+
     if (!this.inimigo || !target) return;
 
+    if (this.damageMode) {
+      if (!this.actions["Damage"]) {
+        this.tempoDano -= delta;
+        if (this.tempoDano <= 0) this.terminarDano();
+      }
+      this.inimigo.position.addScaledVector(this.knockbackVel, delta);
+      this.knockbackVel.multiplyScalar(Math.exp(-this.atritoKnockback * delta));
+
+      this.atualizarHitbox();
+      return;
+    }
+
+    if (this.attackMode) return;
+
     const direcao = new THREE.Vector3();
-
     direcao.subVectors(target, this.inimigo.position);
-
     direcao.y = 0;
 
     const distancia = direcao.length();
@@ -96,20 +230,29 @@ export default class Inimigo {
       this.inimigo.position.addScaledVector(direcao, this.velocidade * delta);
 
       const alvo = Math.atan2(direcao.x, direcao.z);
-
       let diferenca = alvo - this.inimigo.rotation.y;
-
       diferenca = Math.atan2(Math.sin(diferenca), Math.cos(diferenca));
-
       this.inimigo.rotation.y += diferenca * 8 * delta;
 
       this.mudarAnimacao("Run");
     } else this.mudarAnimacao("Idle");
 
+    this.tempoDesdeUltimoAtaque += delta;
+    const dist = this.inimigo.position.distanceTo(target);
+    if (
+      dist <= this.distanciaDisparo &&
+      this.tempoDesdeUltimoAtaque >= this.cooldownAtaque
+    ) {
+      this.dispararBolaDeFogo(target, listaProjeteis);
+      this.tempoDesdeUltimoAtaque = 0;
+    }
+
     this.atualizarHitbox();
   }
+
   atualizarHitbox() {
-    if(!this.ativo) return
+    if (this.health <= 0 || !this.inimigo) return;
+
     const centro = this.inimigo.position.clone();
     centro.add(this.offsetHitbox);
 
@@ -117,5 +260,39 @@ export default class Inimigo {
 
     this.hitbox.min.copy(centro).sub(metade);
     this.hitbox.max.copy(centro).add(metade);
+  }
+  terminarDisparo() {
+    this.attackMode = false;
+    this.mudarAnimacao("Idle");
+  }
+  dispararBolaDeFogo(alvoPos, listaProjeteis) {
+    const ATRASO_MS = 300; // tempo entre iniciar a animação e soltar a bola de fogo
+
+    this.attackMode = true;
+    this.mudarAnimacao("MagicAttack");
+
+    const alvoTravado = alvoPos.clone();
+    setTimeout(() => {
+      if (!this.attackMode || this.damageMode || this.health <= 0) return;
+
+      const mao = this.inimigo.getObjectByName("mixamorigRightHand");
+      const origem = new THREE.Vector3();
+      if (mao) mao.getWorldPosition(origem);
+      else origem.copy(this.inimigo.position).setY(1);
+
+      const alvo = alvoTravado.setY(origem.y);
+      const direcao = new THREE.Vector3().subVectors(alvo, origem);
+      if (direcao.lengthSq() < 0.0001) return;
+
+      const anguloDesvio = (Math.random() - 0.5) * Math.PI * 0.1;
+      direcao
+        .applyAxisAngle(new THREE.Vector3(0, 1, 0), anguloDesvio)
+        .normalize();
+
+      listaProjeteis.push(new Projetil(this.scene, origem, direcao));
+    }, ATRASO_MS);
+  }
+  isDead() {
+    return this.health <= 0;
   }
 }
