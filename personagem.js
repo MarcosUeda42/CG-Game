@@ -15,6 +15,7 @@ export default class Personagem {
     this.currentAction = null;
     this.clock = new THREE.Clock();
     this.velocidade = 3;
+    this.damageMode = false;
     this.meleeStates = [
       {
         inicio: 0.0,
@@ -36,7 +37,7 @@ export default class Personagem {
         hitFim: 1,
         dano: 10,
         hitbox: {
-          tamanho: new THREE.Vector3(2.0, 1.6, 1.6), // golpe mais largo
+          tamanho: new THREE.Vector3(2.0, 1.6, 1.6),
           distancia: 1.4,
           altura: 0.9,
           lateral: 0,
@@ -47,9 +48,9 @@ export default class Personagem {
         fim: 3.5,
         hitInicio: 0.5,
         hitFim: 0.7,
-        dano: 10,
+        dano: 15,
         hitbox: {
-          tamanho: new THREE.Vector3(1.6, 1.8, 2.0), // golpe final, mais longo
+          tamanho: new THREE.Vector3(1.6, 1.8, 2.0),
           distancia: 1.6,
           altura: 0.9,
           lateral: 0,
@@ -312,7 +313,7 @@ export default class Personagem {
     this.ataque(delta);
     this.atualizarHitboxAtaque();
 
-    if (this.passoMelee !== -1) return;
+    if (this.passoMelee !== -1 || this.damageMode) return;
 
     const direcao = new THREE.Vector3();
     for (const tecla in this.direcoes)
@@ -360,5 +361,26 @@ export default class Personagem {
       oponente.dano(passo.dano, this.pivot.position);
       this.acertou = true;
     }
+  }
+  dano(valor, origem = null) {
+    if (this.health <= 0 || this.damageMode) return;
+
+    this.health = Math.max(0, this.health - valor);
+    this.desenharBarra();
+
+    if (this.health <= 0) return;
+
+    this.damageMode = true;
+
+    if (origem && this.inimigo) {
+      this.knockbackVel.subVectors(this.inimigo.position, origem).setY(0);
+
+      if (this.knockbackVel.lengthSq() > 0.0001)
+        this.knockbackVel.normalize().multiplyScalar(this.forcaKnockback);
+      else this.knockbackVel.set(0, 0, 0);
+    }
+
+    if (this.actions["Damage"]) this.mudarAnimacao("Damage");
+    else this.tempoDano = DURACAO_DANO_FALLBACK;
   }
 }

@@ -82,9 +82,7 @@ export default class Inimigo {
     this.texture.needsUpdate = true; // envia o novo desenho para a GPU
   }
 
-  // origem: posição (Vector3) de quem causou o dano, usada para a direção do knockback
   dano(valor, origem = null) {
-    // morto ou em damageMode: não toma dano
     if (this.health <= 0 || this.damageMode) return;
 
     this.health = Math.max(0, this.health - valor);
