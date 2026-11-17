@@ -95,7 +95,7 @@ body {
   margin-bottom: 20px;
 }
 
-#resume-button,
+#resume-button,#restart-button,
 #quit-button {
   width: 220px;
   padding: 12px 0;
@@ -111,12 +111,12 @@ body {
   text-align: center;
 }
 
-#resume-button,
+#resume-button,#restart-button,
 #quit-button {
   background-color: #4c87af;
   color: white;
 }
-#resume-button:hover,
+#resume-button:hover, #restart-button:hover,
 #quit-button:hover {
   background-color: #4562a0;
   transform: scale(1.05);

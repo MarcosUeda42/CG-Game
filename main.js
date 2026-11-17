@@ -43,7 +43,7 @@ class Jogo {
     this.gameOverEl = document.getElementById("game-over");
   }
   configurarGameOver() {
-    document.getElementById("restart-button").addEventListener("click", () => {
+    document.getElementById("restart-death-button").addEventListener("click", () => {
       sessionStorage.setItem("reiniciar", "1");
       window.location.reload();
     });
@@ -53,6 +53,13 @@ class Jogo {
       .addEventListener("click", () => window.location.reload());
   }
 
+  configurarRestart() {
+    document.getElementById("restart-button").addEventListener("click", () => {
+      sessionStorage.setItem("reiniciar", "1");
+      window.location.reload();
+    });
+  }
+  
   mostrarGameOver() {
     this.camera.modo = 1;
     this.gameOver = true;
@@ -78,6 +85,7 @@ class Jogo {
     this.animar();
     this.configurarPausa();
     this.configurarGameOver();
+    this.configurarRestart();
   }
 
   configurarPausa() {
