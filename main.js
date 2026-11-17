@@ -2,7 +2,6 @@ import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import Personagem from "./personagem.js";
 import Camera from "./camera.js";
-import Inimigo from "./inimigo.js";
 import Controles from "./controles.js";
 import Renderer from "./renderer.js";
 import GeradorInimigo from "./gerador_inimigo.js";
@@ -307,12 +306,46 @@ class Jogo {
     this.geradorInimigo = new GeradorInimigo(this.scene);
     this.clock = new THREE.Clock();
     this.projeteis = [];
+
+    this.gameOver = false;
+    this.gameOverEl = document.getElementById("game-over");
   }
+  configurarGameOver() {
+    document.getElementById("restart-button").addEventListener("click", () => {
+      sessionStorage.setItem("reiniciar", "1");
+      window.location.reload();
+    });
+
+    document
+      .getElementById("gameover-quit-button")
+      .addEventListener("click", () => window.location.reload());
+  }
+
+  mostrarGameOver() {
+    this.camera.modo = 1;
+    this.gameOver = true;
+    this.gameOverEl.classList.add("visivel");
+    document.getElementById("health-bar").classList.add("hidden");
+    this.removerInimigos();
+  }
+
+  atualizarSpotGameOver() {
+    const p = this.personagem.getPosition().clone();
+    p.y += 0.9;
+    p.project(this.camera.camera);
+
+    const x = (p.x * 0.5 + 0.5) * 100;
+    const y = (-p.y * 0.5 + 0.5) * 100;
+    this.gameOverEl.style.setProperty("--x", `${x}%`);
+    this.gameOverEl.style.setProperty("--y", `${y}%`);
+  }
+
   iniciar() {
     this.cenario.renderizar();
     this.personagem.carregar();
     this.animar();
     this.configurarPausa();
+    this.configurarGameOver();
   }
 
   configurarPausa(){
@@ -334,7 +367,7 @@ class Jogo {
       const titleScreen = document.getElementById("title-screen");
       const jogoRodando = titleScreen.classList.contains("hidden");
 
-      if (jogoRodando && (e.code === "Escape")) {
+      if (jogoRodando && !this.gameOver && e.code === "Escape") {
         alternarPausa();
       }
     });
@@ -355,37 +388,39 @@ class Jogo {
       this.clock.getDelta();
       return;
     }
-      
 
     const delta = this.clock.getDelta();
 
-    if (this.controles.teclas["KeyQ"])
+    if (this.controles.teclas["KeyQ"] && !this.gameOver)
       this.camera.orbitarEsquerda(this.personagem.getPosition());
-    else if (this.controles.teclas["KeyE"])
+    else if (this.controles.teclas["KeyE"] && !this.gameOver)
       this.camera.orbitarDireita(this.personagem.getPosition());
 
-    if (this.controles.teclas["KeyC"]) {
+    if (this.controles.teclas["KeyC"] && !this.gameOver) {
       this.camera.modo = (this.camera.modo + 1) % 2;
       this.controles.teclas["KeyC"] = false;
     }
 
     this.personagem.atualizar(this.camera);
+    if (this.personagem.morto && !this.gameOver) this.mostrarGameOver();
 
-    this.geradorInimigo.atualizar(
-      delta,
-      this.personagem.getPosition(),
-      this.projeteis,
-    );
-    for (const inimigo of this.geradorInimigo.inimigos) {
-      this.personagem.verificarAcerto(inimigo, this.scene);
+    if (!this.gameOver) {
+      this.geradorInimigo.atualizar(
+        delta,
+        this.personagem.getPosition(),
+        this.projeteis,
+      );
     }
+
+    for (const inimigo of this.geradorInimigo.inimigos)
+      this.personagem.verificarAcerto(inimigo, this.scene);
 
     for (let i = this.projeteis.length - 1; i >= 0; i--) {
       const p = this.projeteis[i];
       p.atualizar(delta);
 
       if (p.hitbox.intersectsBox(this.personagem.hitbox)) {
-        this.personagem.dano(10, p);
+        this.personagem.dano(100, p);
         p.destruir();
         this.projeteis.splice(i, 1);
         continue;
@@ -395,8 +430,16 @@ class Jogo {
 
     this.camera.atualizarPosicao(this.personagem.getPosition());
     this.renderer.draw(this.scene, this.camera.camera);
+    if (this.gameOver) this.atualizarSpotGameOver();
     this.ui.updatePlayerHealth();
   };
+
+  removerInimigos() {
+    this.geradorInimigo.removerTodos();
+
+    for (const p of this.projeteis) p.destruir();
+    this.projeteis.length = 0;
+  }
 }
 
 window.addEventListener("DOMContentLoaded", () => {
@@ -404,14 +447,16 @@ window.addEventListener("DOMContentLoaded", () => {
   const titleScreen = document.getElementById("title-screen");
   const healthBar = document.getElementById("health-bar");
 
-  startButton.addEventListener("click", () => {
-    // Esconde a tela de título
+  const iniciarJogo = () => {
     titleScreen.classList.add("hidden");
-
     healthBar.classList.remove("hidden");
+    new Jogo().iniciar();
+  };
 
-    // Inicializa e inicia o jogo após o clique
-    const jogo = new Jogo();
-    jogo.iniciar();
-  });
+  startButton.addEventListener("click", iniciarJogo);
+
+  if (sessionStorage.getItem("reiniciar")) {
+    sessionStorage.removeItem("reiniciar");
+    iniciarJogo();
+  }
 });

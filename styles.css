@@ -1,3 +1,8 @@
+@font-face {
+  font-family: OptimusPrinceps;
+  src: url(fontes/OptimusPrinceps.ttf);
+}
+
 body {
   margin: 0;
   overflow: hidden;
@@ -112,4 +117,76 @@ body {
 
 .hidden {
   display: none !important;
+}
+
+#game-over {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 2.5s ease 0.8s;
+}
+
+#game-over.visivel {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+#game-over-spot {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    circle at var(--x, 50%) var(--y, 50%),
+    rgba(0, 0, 0, 0) 0,
+    rgba(0, 0, 0, 0) 90px,
+    rgba(0, 0, 0, 0.93) 280px
+  );
+}
+
+#game-over-content {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10vh 0;
+}
+
+#game-over h1 {
+  margin: 0;
+  font-size: clamp(3rem, 9vw, 7rem);
+  font-family: OptimusPrinceps;
+  letter-spacing: 0.15em;
+  color: #b30000;
+  text-shadow: 0 0 20px #000, 0 0 40px #600;
+  opacity: 0;
+  transition: opacity 2s ease 2.5s;
+}
+
+.game-over-botoes {
+  display: flex;
+  gap: 1rem;
+  opacity: 0;
+  transition: opacity 1.5s ease 3.5s;
+}
+
+#game-over.visivel h1,
+#game-over.visivel .game-over-botoes {
+  opacity: 1;
+}
+
+.game-over-botoes button {
+  padding: 0.8rem 1.8rem;
+  font-size: 1.2rem;
+  color: #eee;
+  background: rgba(0, 0, 0, 0.6);
+  border: 1px solid #888;
+  cursor: pointer;
+}
+
+.game-over-botoes button:hover {
+  background: #700;
+  border-color: #f55;
 }

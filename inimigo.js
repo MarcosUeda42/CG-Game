@@ -133,6 +133,8 @@ export default class Inimigo {
 
   carregar() {
     this.loader.load(this.url, (gltf) => {
+      if (this.removido) return;
+      
       this.inimigo = gltf.scene;
       this.inimigo.scale.setScalar(ESCALA_MODELO);
       this.inimigo.position.set(this.posX, this.posY, this.posZ);
@@ -266,7 +268,6 @@ export default class Inimigo {
     const limite = Math.cos(THREE.MathUtils.degToRad(anguloMaxGraus));
     return frente.dot(paraAlvo) >= limite;
   }
-
   atualizarHitbox() {
     if (this.health <= 0 || !this.inimigo) return;
 
