@@ -8,9 +8,12 @@ export default class GeradorInimigo {
     this.intervalo = 5.0;
     this.tempoUltimoInimigo = 0;
     this.limite = 5;
+    this.ativo = true;
   }
 
   atualizar(delta, posJogador, listaProjeteis) {
+    if (!this.ativo) return;
+
     this.tempoTotal += delta;
     this.tempoUltimoInimigo += delta;
 
@@ -31,6 +34,32 @@ export default class GeradorInimigo {
       }
       inimigo.atualizar(posJogador, delta, listaProjeteis);
     }
+  }
+
+  removerTodos() {
+    this.ativo = false;
+
+    for (const inimigo of this.inimigos) {
+      inimigo.removido = true; // cancela timeouts e o carregamento pendente
+
+      if (typeof inimigo.destruir === "function") {
+        inimigo.destruir();
+        continue;
+      }
+
+      inimigo.inimigo?.removeFromParent();
+      inimigo.inimigo?.traverse((obj) => {
+        if (!obj.isMesh) return;
+        obj.geometry?.dispose();
+        const mats = Array.isArray(obj.material)
+          ? obj.material
+          : [obj.material];
+        mats.forEach((m) => m.dispose());
+      });
+      inimigo.hitboxHelper?.removeFromParent();
+    }
+
+    this.inimigos.length = 0;
   }
 
   gerarInimigo() {

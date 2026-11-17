@@ -262,8 +262,6 @@ export default class Personagem {
     this.hitbox.min.copy(centro).sub(metade);
     this.hitbox.max.copy(centro).add(metade);
   }
-  // Cria a hitbox de ataque na frente do personagem durante a janela de acerto
-  // e a esvazia fora dela.
   atualizarHitboxAtaque() {
     this.ataqueAtivo = false;
 

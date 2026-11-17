@@ -133,6 +133,8 @@ export default class Inimigo {
 
   carregar() {
     this.loader.load(this.url, (gltf) => {
+      if (this.removido) return;
+
       this.inimigo = gltf.scene;
       this.inimigo.scale.setScalar(ESCALA_MODELO);
       this.inimigo.position.set(this.posX, this.posY, this.posZ);
@@ -243,13 +245,28 @@ export default class Inimigo {
       dist <= this.distanciaDisparo &&
       this.tempoDesdeUltimoAtaque >= this.cooldownAtaque
     ) {
-      this.dispararBolaDeFogo(target, listaProjeteis);
-      this.tempoDesdeUltimoAtaque = 0;
+      if (this.estaNaFrente(target)) {
+        this.dispararBolaDeFogo(target, listaProjeteis);
+        this.tempoDesdeUltimoAtaque = 0;
+      } else this.girarParaAlvo(target, delta);
     }
 
     this.atualizarHitbox();
   }
+  estaNaFrente(alvoPos, anguloMaxGraus = 60) {
+    const frente = new THREE.Vector3(0, 0, 1)
+      .applyQuaternion(this.inimigo.quaternion)
+      .setY(0)
+      .normalize();
 
+    const paraAlvo = new THREE.Vector3()
+      .subVectors(alvoPos, this.inimigo.position)
+      .setY(0)
+      .normalize();
+
+    const limite = Math.cos(THREE.MathUtils.degToRad(anguloMaxGraus));
+    return frente.dot(paraAlvo) >= limite;
+  }
   atualizarHitbox() {
     if (this.health <= 0 || !this.inimigo) return;
 
@@ -265,8 +282,22 @@ export default class Inimigo {
     this.attackMode = false;
     this.mudarAnimacao("Idle");
   }
+  girarParaAlvo(alvoPos, delta, velocidade = 6) {
+    const direcao = new THREE.Vector3()
+      .subVectors(alvoPos, this.inimigo.position)
+      .setY(0);
+    if (direcao.lengthSq() < 0.0001) return;
+
+    const anguloAlvo = Math.atan2(direcao.x, direcao.z);
+    const quatAlvo = new THREE.Quaternion().setFromAxisAngle(
+      new THREE.Vector3(0, 1, 0),
+      anguloAlvo,
+    );
+
+    this.inimigo.quaternion.slerp(quatAlvo, Math.min(1, velocidade * delta));
+  }
   dispararBolaDeFogo(alvoPos, listaProjeteis) {
-    const ATRASO_MS = 300; // tempo entre iniciar a animação e soltar a bola de fogo
+    const ATRASO_MS = 300;
 
     this.attackMode = true;
     this.mudarAnimacao("MagicAttack");
