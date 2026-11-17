@@ -134,7 +134,7 @@ export default class Inimigo {
   carregar() {
     this.loader.load(this.url, (gltf) => {
       if (this.removido) return;
-      
+
       this.inimigo = gltf.scene;
       this.inimigo.scale.setScalar(ESCALA_MODELO);
       this.inimigo.position.set(this.posX, this.posY, this.posZ);
@@ -248,8 +248,7 @@ export default class Inimigo {
       if (this.estaNaFrente(target)) {
         this.dispararBolaDeFogo(target, listaProjeteis);
         this.tempoDesdeUltimoAtaque = 0;
-      }
-      else this.girarParaAlvo(target, delta);
+      } else this.girarParaAlvo(target, delta);
     }
 
     this.atualizarHitbox();
@@ -292,7 +291,7 @@ export default class Inimigo {
     const anguloAlvo = Math.atan2(direcao.x, direcao.z);
     const quatAlvo = new THREE.Quaternion().setFromAxisAngle(
       new THREE.Vector3(0, 1, 0),
-      anguloAlvo
+      anguloAlvo,
     );
 
     this.inimigo.quaternion.slerp(quatAlvo, Math.min(1, velocidade * delta));

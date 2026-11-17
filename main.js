@@ -80,11 +80,11 @@ class Jogo {
     this.configurarGameOver();
   }
 
-  configurarPausa(){
+  configurarPausa() {
     const pauseMenu = document.getElementById("pause-menu");
     const resumeButton = document.getElementById("resume-button");
     const quitButton = document.getElementById("quit-button");
-    
+
     const alternarPausa = () => {
       this.pausado = !this.pausado;
       if (this.pausado) {
@@ -116,7 +116,7 @@ class Jogo {
   animar = () => {
     requestAnimationFrame(this.animar);
 
-    if (this.pausado){
+    if (this.pausado) {
       this.clock.getDelta();
       return;
     }

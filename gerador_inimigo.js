@@ -13,7 +13,7 @@ export default class GeradorInimigo {
 
   atualizar(delta, posJogador, listaProjeteis) {
     if (!this.ativo) return;
-    
+
     this.tempoTotal += delta;
     this.tempoUltimoInimigo += delta;
 
@@ -51,7 +51,9 @@ export default class GeradorInimigo {
       inimigo.inimigo?.traverse((obj) => {
         if (!obj.isMesh) return;
         obj.geometry?.dispose();
-        const mats = Array.isArray(obj.material) ? obj.material : [obj.material];
+        const mats = Array.isArray(obj.material)
+          ? obj.material
+          : [obj.material];
         mats.forEach((m) => m.dispose());
       });
       inimigo.hitboxHelper?.removeFromParent();
