@@ -1,71 +1,132 @@
-# Jogo desenvolvido com conceitos de computação gráfica
+# Jogo desenvolvido com conceitos de Computação Gráfica
 
-- Docente:
-  - Ana Luisa Dine Martins Lemos
-- Alunos:
-  - Davi Torres
-  - Erik dos Santos Reis
-  - Felipe Tashiro
-  - Guilherme Samuel dos Santos
-  - Marcos Ueda
+Projeto desenvolvido para a disciplina de Computação Gráfica.
 
-## Jogo que será desenvolvido
+## Equipe
 
-> Bullet Heaven (shoot ‘em up) estilo jogo arcade, com hordas de inimigos.
+**Docente**
+- Ana Luisa Dine Martins Lemos
 
-## Descrição do jogo (personagens, jogabilidade, objetivo)
+**Alunos**
+- Davi Torres
+- Erik dos Santos Reis
+- Felipe Tashiro
+- Guilherme Samuel dos Santos
+- Marcos Ueda
 
-> O objetivo principal é sobreviver ao máximo de hordas/ondas possíveis de inimigos. A cada nova onda, a quantidade, a velocidade e a variedade dos inimigos aumentam, exigindo que o jogador se posicione melhor e tome decisões rápidas. A pontuação é baseada no tempo de sobrevivência, nos inimigos eliminados e na onda alcançada, e fica registrada em um ranking local, incentivando o jogador a tentar novamente e superar seu recorde.
+## Sobre o jogo
 
-## Os personagens são:
+O projeto consiste em um jogo 3D inspirado no gênero **Bullet Heaven / arcade**, desenvolvido em JavaScript utilizando **Three.js** para renderização gráfica no navegador.
 
-- Jogador: o herói deste universo.
-- Inimigos comuns: unidades pequenas e numerosas que perseguem o jogador em linha reta.
-- Inimigos especiais: variantes mais rápidas, mais resistentes ou que disparam projéteis.
+O objetivo do jogador é sobreviver enquanto enfrenta inimigos que surgem continuamente pela arena.
 
-## Funcionamento da jogabilidade
+Os inimigos perseguem o jogador e também podem realizar ataques à distância através de projéteis.
 
-> O controle é feito por meio de movimentação nas quatro direções em terceira pessoa. O jogador poderá coletar recompensas pelo mapa para evoluir o personagem. Além disso, também possui uma barra de vida. Se algum inimigo entrar em colisão, perde um pouco da barra de vida, e o jogo termina quando ela zera.
+Ao derrotar inimigos, o jogador recebe pontos. A pontuação obtida ao final da partida é armazenada no histórico da sessão.
 
-## Ideias iniciais das estratégias que se pretende utilizar
+## Como jogar
 
-- Progressão de dificuldade gradual;
-- Sistema de recompensas e evolução;
-- Ciclo de jogo curto (inspirado em arcade);
-- Feedback visual e sonoro;
-- Uso de assets (modelos 3D) simples ou gratuitos para otimizar o tempo de desenvolvimento;
-- Separar o código em partes independentes (jogador, inimigos, projéteis, sistema de ondas, interface) usando POO, similar visto em atividades apresentadas em sala;
-- Spawn de inimigos por regras e fórmulas de dificuldade, em vez de ondas totalmente fixas;
-- Controle e otimização de spawn na criação de projéteis, para não deixar o jogo travado.
+O jogo pode ser executado diretamente pelo navegador através do GitHub Pages:
+
+https://marcosueda42.github.io/CG-Game/
+
+### Controles
+
+- `W`, `A`, `S`, `D` — movimentação do personagem;
+- `Mouse 1` — ataque corpo a corpo;
+- `Botão do meio do mouse` — correr;
+- `Q` / `E` — rotacionar a câmera;
+- `C` — alternar entre os modos de câmera;
+- `Esc` — pausar o jogo.
+
+## Objetivo
+
+O jogador deve derrotar inimigos e sobreviver pelo maior tempo possível.
 
 ## Estado atual do projeto
 
-Atualmente já foram implementados:
+Atualmente estão implementados:
 
 - Cena 3D utilizando Three.js;
-- Câmera com projeção perspectiva;
-- Movimentação orbital da câmera pelas setas do teclado;
-- Terreno;
-- Iluminação ambiente e pontual;
-- Personagem principal 3D animado;
-- Inimigo 3D animado;
-- Árvores e formações rochosas no cenário;
-- Posicionamento, escala e rotação dos elementos da cena.
+- câmera em perspectiva;
+- câmera acompanhando o jogador;
+- dois modos de câmera;
+- rotação orbital da câmera;
+- movimentação do jogador;
+- corrida;
+- personagem principal 3D animado;
+- animações de Idle, Walk, Run, Attack, Damage e Death;
+- sistema de ataque corpo a corpo;
+- sequência de ataques;
+- hitbox de ataque;
+- possibilidade de um ataque atingir múltiplos inimigos;
+- barra de vida do jogador;
+- sistema de dano e morte do jogador;
+- knockback;
+- geração contínua de inimigos;
+- múltiplos inimigos simultâneos;
+- inimigos com barra de vida;
+- animações de movimentação, dano, ataque e morte dos inimigos;
+- perseguição do jogador pelos inimigos;
+- ataques à distância realizados pelos inimigos;
+- projéteis;
+- colisão entre projéteis e jogador;
+- sistema de pontuação;
+- histórico de pontuações da sessão;
+- tela inicial;
+- menu de pausa;
+- opção de reiniciar a partida;
+- tela de Game Over;
+- terreno texturizado;
+- árvores;
+- pedras;
+- grama;
+- tochas;
+- iluminação ambiente;
+- iluminação da lua;
+- iluminação pontual das tochas;
+- paredes delimitando a arena;
+- colisão entre jogador e paredes.
 
-## Modelos e animações utilizados
+## Estrutura do projeto
+
+O código foi dividido em módulos com responsabilidades específicas.
+
+```text
+CG-Game/
+├── main.js
+├── cenario.js
+├── personagem.js
+├── inimigo.js
+├── gerador_inimigo.js
+├── projetil.js
+├── camera.js
+├── controles.js
+├── renderer.js
+├── ui.js
+├── pontuacao.js
+├── historico_pontuacao.js
+├── index.html
+├── styles.css
+├── personagem/
+├── inimigo/
+├── objetos/
+├── texturas/
+└── fontes/
+```
+
+## Modelos e assets
 
 ### Personagem principal
 
-- Paladin W;
-- Animação Crouched Walking.
+Modelo e animações obtidos através do Mixamo.
 
 Fonte:  
 https://www.mixamo.com/
 
 ### Inimigo
 
-- Maynard;
-- Animação Magic Attack 01.
+Modelo e animações obtidos através do Mixamo.
 
 Fonte:  
 https://www.mixamo.com/
@@ -80,40 +141,37 @@ https://poly.pizza/m/OQvi8PIZ40
 Fonte:  
 https://poly.pizza/m/s6yZuyU2y5
 
-## Controles atuais
+### Grama
 
-- `←` movimenta a câmera para a esquerda;
-- `→` movimenta a câmera para a direita.
+Fonte:  
+https://poly.pizza/m/vUJjrRsFp4
 
-## Como executar
+### Tochas
 
-1. Clone o repositório:
+Fonte:  
+https://poly.pizza/m/pNsfJzhXiD
+
+## Execução local para desenvolvimento
+
+Para modificar ou testar o projeto localmente, clone o repositório:
 
 ```bash
 git clone https://github.com/MarcosUeda42/CG-Game.git
 ```
 
-2. Entre na pasta do projeto.
+Depois abra a pasta utilizando um servidor local, como a extensão **Live Server** do Visual Studio Code.
 
-3. Abra o arquivo `index.html` utilizando um servidor local, como **Live Server**.
+## Próximas etapas
 
-## O que ainda falta implementar
+Entre as possíveis evoluções do projeto estão:
 
-Entre os principais elementos previstos estão:
-
-- Movimentação do jogador;
-- Câmera acompanhando o jogador;
-- Sistema de disparos e projéteis;
-- Comportamento dos inimigos;
-- Sistema de hordas;
-- Colisões;
-- Barra de vida e dano;
-- Pontuação;
-- Recompensas e evolução;
-- Inimigos especiais;
-- Múltiplas posições de câmera;
-- Texturas adicionais;
-- Efeitos visuais e sonoros;
-- Condição de derrota;
-- Ranking local;
-- Otimizações para grandes quantidades de inimigos e projéteis.
+- sistema de ondas;
+- progressão de dificuldade;
+- diferentes tipos de inimigos;
+- inimigos especiais;
+- recompensas e evolução do personagem;
+- melhorias no sistema de pontuação;
+- ranking persistente utilizando armazenamento local;
+- registro de informações adicionais das partidas;
+- efeitos visuais e sonoros;
+- otimização para maiores quantidades de inimigos e projéteis.

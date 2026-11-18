@@ -32,6 +32,18 @@ body {
     background 0.2s ease;
 }
 
+#score {
+  position: fixed;
+  top: 16px;
+  right: 24px;
+  z-index: 10;
+  color: white;
+  font-family: OptimusPrinceps, Arial, sans-serif;
+  font-size: 1.6rem;
+  text-shadow: 0 0 6px black;
+  pointer-events: none;
+}
+
 #title-screen {
   position: fixed;
   top: 0;
@@ -217,4 +229,74 @@ body {
 .game-over-botoes button:hover {
   background: #700;
   border-color: #f55;
+}
+
+#history-button {
+  margin-top: 12px;
+  padding: 12px 25px;
+  font-size: 1.2rem;
+  background-color: #333;
+  color: white;
+  border: 1px solid #888;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+#history-button:hover {
+  background-color: #555;
+}
+
+#history-screen {
+  position: fixed;
+  inset: 0;
+  background: rgba(24, 16, 16, 0.97);
+  color: white;
+  font-family: OptimusPrinceps, Arial, sans-serif;
+  z-index: 30;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.history-content {
+  width: min(600px, 80vw);
+  text-align: center;
+}
+
+.history-content h1 {
+  font-size: 2.5rem;
+  margin-bottom: 30px;
+}
+
+#history-list {
+  max-height: 50vh;
+  overflow-y: auto;
+  margin-bottom: 30px;
+}
+
+.history-item {
+  padding: 12px;
+  margin: 8px 0;
+
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid #555;
+  border-radius: 6px;
+
+  font-family: Arial, sans-serif;
+  font-size: 1.1rem;
+}
+
+#history-back-button {
+  padding: 12px 30px;
+  font-size: 1.1rem;
+  color: white;
+  background: #4c87af;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+#history-back-button:hover {
+  background: #4562a0;
 }

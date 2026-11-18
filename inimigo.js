@@ -6,7 +6,7 @@ const ESCALA_MODELO = 0.01;
 const DURACAO_DANO_FALLBACK = 0.6;
 
 export default class Inimigo {
-  constructor(url, scene, x, y, z, rotacaoY) {
+  constructor(url, scene, x, y, z, rotacaoY, valorPontos = 100, aoMorrer = null) {
     this.url = url;
     this.inimigo = null;
     this.loader = new GLTFLoader();
@@ -42,6 +42,10 @@ export default class Inimigo {
     this.health = 100;
     this.healthMax = 100;
     this.removido = false;
+
+    this.valorPontos = valorPontos;
+    this.aoMorrer = aoMorrer;
+    this.morteContabilizada = false;
 
     this.canvas = document.createElement("canvas");
     this.canvas.width = 256;
@@ -89,12 +93,15 @@ export default class Inimigo {
   }
 
   dano(valor, origem = null) {
-    if (this.health <= 0 || this.damageMode) return;
+    if (this.health <= 0 || this.damageMode) return false;
 
     this.health = Math.max(0, this.health - valor);
     this.desenharBarra();
 
-    if (this.health <= 0) return;
+    if (this.health <= 0) {
+      this.registrarMorte();
+      return true;
+    }
 
     this.damageMode = true;
 
@@ -108,7 +115,18 @@ export default class Inimigo {
 
     if (this.actions["Damage"]) this.mudarAnimacao("Damage");
     else this.tempoDano = DURACAO_DANO_FALLBACK;
+    return true;
   }
+
+  registrarMorte() {
+  if (this.morteContabilizada) return;
+
+  this.morteContabilizada = true;
+
+  if (typeof this.aoMorrer === "function") {
+    this.aoMorrer(this.valorPontos, this);
+  }
+}
 
   terminarDano() {
     this.damageMode = false;

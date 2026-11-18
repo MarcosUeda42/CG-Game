@@ -6,12 +6,15 @@ import Controles from "./controles.js";
 import Renderer from "./renderer.js";
 import GeradorInimigo from "./gerador_inimigo.js";
 import UI from "./ui.js";
+import Pontuacao from "./pontuacao.js";
+import HistoricoPontuacao from "./historico_pontuacao.js";
+
 
 // Inicialização das classes e loop de animação
 // Personagem importado do MIXAMO Paladin W + Crouched Walking https://www.mixamo.com/#/
 // Inimigo Maynard + Magic Attack 01 (não é mais usado)
 class Jogo {
-  constructor() {
+  constructor(historico) {
     // inicializa a cena
     this.scene = new THREE.Scene();
     this.scene.background = new THREE.Color("midnightblue");
@@ -35,7 +38,15 @@ class Jogo {
     );
     this.ui = new UI(this.personagem);
 
-    this.geradorInimigo = new GeradorInimigo(this.scene);
+    this.pontuacao = new Pontuacao();
+    this.ui.updateScore(this.pontuacao.getValor());
+    this.historico = historico;
+    this.pontuacaoRegistrada = false;
+
+    this.geradorInimigo = new GeradorInimigo(this.scene, (pontos) => {
+      const novoValor = this.pontuacao.adicionar(pontos);
+      this.ui.updateScore(novoValor);
+    });
     this.clock = new THREE.Clock();
     this.projeteis = [];
 
@@ -63,6 +74,12 @@ class Jogo {
   mostrarGameOver() {
     this.camera.modo = 1;
     this.gameOver = true;
+
+    if (!this.pontuacaoRegistrada) {
+      this.historico.registrar(this.pontuacao.getValor());
+      this.pontuacaoRegistrada = true;
+    }
+
     this.gameOverEl.classList.add("visivel");
     document.getElementById("health-bar").classList.add("hidden");
     this.removerInimigos();
@@ -186,14 +203,58 @@ window.addEventListener("DOMContentLoaded", () => {
   const startButton = document.getElementById("start-button");
   const titleScreen = document.getElementById("title-screen");
   const healthBar = document.getElementById("health-bar");
+  const score = document.getElementById("score");
+
+  const historyButton = document.getElementById("history-button");
+  const historyScreen = document.getElementById("history-screen");
+  const historyList = document.getElementById("history-list");
+  const historyBackButton = document.getElementById("history-back-button");
+  const historico = new HistoricoPontuacao();
+  
+  const renderizarHistorico = () => {
+    const registros = historico.getRegistros().reverse();
+
+    historyList.innerHTML = "";
+
+    if (registros.length === 0) {
+      const mensagem = document.createElement("p");
+      mensagem.textContent = "Nenhuma partida registrada.";
+      historyList.appendChild(mensagem);
+      return;
+    }
+
+    registros.forEach((registro) => {
+      const item = document.createElement("div");
+      item.classList.add("history-item");
+
+      const data = new Date(registro.data).toLocaleString("pt-BR");
+
+      item.textContent = `${registro.pontos} pontos — ${data}`;
+
+      historyList.appendChild(item);
+    });
+  };
 
   const iniciarJogo = () => {
     titleScreen.classList.add("hidden");
     healthBar.classList.remove("hidden");
-    new Jogo().iniciar();
+    score.classList.remove("hidden");
+
+    new Jogo(historico).iniciar();
   };
 
   startButton.addEventListener("click", iniciarJogo);
+  historyButton.addEventListener("click", () => {
+    renderizarHistorico();
+
+    titleScreen.classList.add("hidden");
+    historyScreen.classList.remove("hidden");
+  });
+
+  historyBackButton.addEventListener("click", () => {
+    historyScreen.classList.add("hidden");
+    titleScreen.classList.remove("hidden");
+  });
 
   if (sessionStorage.getItem("reiniciar")) {
     sessionStorage.removeItem("reiniciar");
