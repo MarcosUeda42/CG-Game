@@ -169,6 +169,7 @@ export default class Cenario {
 
     const texPedra = texLoader.load("./texturas/stone.png");
     const texTronco = texLoader.load("./texturas/planks.png");
+    const texPisoTronco = texLoader.load("./texturas/planks.png");
     const texPedraEscura = texLoader.load("./texturas/darkstone.jpg");
     texPedra.colorSpace = THREE.SRGBColorSpace;
     texPedra.wrapS = THREE.RepeatWrapping;
@@ -180,7 +181,9 @@ export default class Cenario {
     texTronco.wrapT = THREE.RepeatWrapping;
     texTronco.repeat.set(2, 2);
 
-    const texPisoTronco = texTronco.clone();
+    texPisoTronco.colorSpace = THREE.SRGBColorSpace;
+    texPisoTronco.wrapS = THREE.RepeatWrapping;
+    texPisoTronco.wrapT = THREE.RepeatWrapping;
     texPisoTronco.repeat.set(10, 1);
 
     texPedraEscura.colorSpace = THREE.SRGBColorSpace;

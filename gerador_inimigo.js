@@ -1,8 +1,9 @@
 import Inimigo from "./inimigo.js";
 
 export default class GeradorInimigo {
-  constructor(scene) {
+  constructor(scene, aoInimigoMorrer = null) {
     this.scene = scene;
+    this.aoInimigoMorrer = aoInimigoMorrer;
     this.inimigos = [];
     this.tempoTotal = 0;
     this.intervalo = 5.0;
@@ -73,6 +74,8 @@ export default class GeradorInimigo {
       1.2,
       z,
       0,
+      100,
+      this.aoInimigoMorrer
     );
 
     novoInimigo.carregar();

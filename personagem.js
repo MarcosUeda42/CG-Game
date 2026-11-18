@@ -475,9 +475,9 @@ export default class Personagem {
       if (inimigo.isDead() || this.alvosAtingidos.has(inimigo)) continue;
       if (!this.hitboxAtaque.intersectsBox(inimigo.hitbox)) continue;
 
-      inimigo.dano(passo.dano, this.pivot.position);
-      if (inimigo.dano(passo.dano, this.pivot.position))
-        this.alvosAtingidos.add(inimigo); // cada inimigo leva no máximo 1 dano por golpe
+      if (inimigo.dano(passo.dano, this.pivot.position)) {
+        this.alvosAtingidos.add(inimigo);
+      }
     }
   }
 }
