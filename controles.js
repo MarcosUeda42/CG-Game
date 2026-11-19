@@ -2,7 +2,10 @@ export default class Controles {
   constructor(canvas = null) {
     this.teclas = {};
     this.mousePressionado = false;
-    this.scrollPressionado = false;
+    this.deltaRoda = 0;
+    this.movimentoMouseX = 0;
+    this.movimentoMouseY = 0;
+    this.canvas = canvas;
 
     window.focus();
 
@@ -16,11 +19,19 @@ export default class Controles {
     });
     window.addEventListener("mousedown", (e) => {
       if (e.button === 0) this.mousePressionado = true;
-      else if (e.button === 1) this.scrollPressionado = true;
     });
     window.addEventListener("mouseup", (e) => {
       if (e.button === 0) this.mousePressionado = false;
-      else if (e.button === 1) this.scrollPressionado = false;
+    });
+    window.addEventListener("wheel", (e) => {
+      this.deltaRoda += e.deltaY;
+    });
+
+    document.addEventListener("mousemove", (e) => {
+      if (document.pointerLockElement !== this.canvas) return;
+
+      this.movimentoMouseX += e.movementX;
+      this.movimentoMouseY += e.movementY;
     });
 
     window.addEventListener("blur", () => {
@@ -32,6 +43,11 @@ export default class Controles {
       canvas.tabIndex = 0;
       canvas.style.outline = "none";
       canvas.focus();
+      canvas.addEventListener("click", () => {
+        if (document.pointerLockElement !== canvas) {
+          this.capturarMouse();
+        }
+      });
     }
   }
 
@@ -39,11 +55,38 @@ export default class Controles {
     return this.mousePressionado;
   }
 
-  getScrollState() {
-    return this.scrollPressionado;
+  consumirDeltaRoda() {
+    const delta = this.deltaRoda;
+    this.deltaRoda = 0;
+    return delta;
   }
-
   getKeyStatus(key) {
     return this.teclas[key];
+  }
+  consumirMovimentoMouse() {
+    const movimento = {
+      x: this.movimentoMouseX,
+      y: this.movimentoMouseY,
+    };
+
+    this.movimentoMouseX = 0;
+    this.movimentoMouseY = 0;
+
+    return movimento;
+  }
+
+  capturarMouse() {
+    if (
+      this.canvas &&
+      document.pointerLockElement !== this.canvas
+    ) {
+      this.canvas.requestPointerLock();
+    }
+  }
+
+  liberarMouse() {
+    if (document.pointerLockElement) {
+      document.exitPointerLock();
+    }
   }
 }

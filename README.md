@@ -34,7 +34,8 @@ https://marcosueda42.github.io/CG-Game/
 
 - `W`, `A`, `S`, `D` — movimentação do personagem;
 - `Mouse 1` — ataque corpo a corpo;
-- `Botão do meio do mouse` — correr;
+- `Scroll` — zoom;
+- `Shift` — correr;
 - `Q` / `E` — rotacionar a câmera;
 - `C` — alternar entre os modos de câmera;
 - `Esc` — pausar o jogo.

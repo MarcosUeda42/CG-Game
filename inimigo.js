@@ -18,7 +18,7 @@ export default class Inimigo {
     this.posY = y;
     this.posZ = z;
     this.rotacaoY = rotacaoY;
-    this.velocidade = 1.5;
+    this.velocidade = 2.5;
     this.distanciaMinima = 2;
 
     this.damageMode = false;

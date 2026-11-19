@@ -6,7 +6,7 @@ export default class Projetil {
     scene,
     posOrigem,
     dirDisparo,
-    velocidade = 6,
+    velocidade = 7,
     alcanceMaxTempo = 4.0,
   ) {
     this.scene = scene;

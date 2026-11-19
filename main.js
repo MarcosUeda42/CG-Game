@@ -51,6 +51,7 @@ class Jogo {
     this.projeteis = [];
 
     this.gameOver = false;
+    this.pausado = false;
     this.gameOverEl = document.getElementById("game-over");
   }
   configurarGameOver() {
@@ -74,6 +75,7 @@ class Jogo {
   mostrarGameOver() {
     this.camera.modo = 1;
     this.gameOver = true;
+    this.controles.liberarMouse();
 
     if (!this.pontuacaoRegistrada) {
       this.historico.registrar(this.pontuacao.getValor());
@@ -103,34 +105,57 @@ class Jogo {
     this.configurarPausa();
     this.configurarGameOver();
     this.configurarRestart();
+    this.controles.capturarMouse();
   }
 
   configurarPausa() {
     const pauseMenu = document.getElementById("pause-menu");
     const resumeButton = document.getElementById("resume-button");
     const quitButton = document.getElementById("quit-button");
+    const canvas = this.renderer.getDOMElement();
 
-    const alternarPausa = () => {
-      this.pausado = !this.pausado;
-      if (this.pausado) {
-        pauseMenu.classList.remove("hidden");
-      } else {
-        pauseMenu.classList.add("hidden");
-      }
+    const pausar = () => {
+      if (this.gameOver || this.pausado) return;
+
+      this.pausado = true;
+      pauseMenu.classList.remove("hidden");
     };
 
-    window.addEventListener("keydown", (e) => {
-      // Evita pausar se a tela de título ainda estiver visível (opcional)
+    const tentarRetomar = () => {
+      if (this.gameOver || !this.pausado) return;
+
+      this.controles.capturarMouse();
+    };
+
+    document.addEventListener("pointerlockchange", () => {
+      const mouseCapturado =
+        document.pointerLockElement === canvas;
+
+      if (!mouseCapturado) {
+        if (!this.gameOver) {
+          pausar();
+        }
+      } else {
+        if (this.pausado && !this.gameOver) {
+          this.pausado = false;
+          pauseMenu.classList.add("hidden");
+        }
+      }
+    });
+
+    window.addEventListener("keyup", (e) => {
       const titleScreen = document.getElementById("title-screen");
       const jogoRodando = titleScreen.classList.contains("hidden");
 
-      if (jogoRodando && !this.gameOver && e.code === "Escape") {
-        alternarPausa();
+      if (!jogoRodando || this.gameOver) return;
+
+      if (e.code === "Escape" && this.pausado) {
+        tentarRetomar();
       }
     });
 
     resumeButton.addEventListener("click", () => {
-      alternarPausa();
+      tentarRetomar();
     });
 
     quitButton.addEventListener("click", () => {
@@ -148,10 +173,24 @@ class Jogo {
 
     const delta = this.clock.getDelta();
 
-    if (this.controles.teclas["KeyQ"] && !this.gameOver)
-      this.camera.orbitarEsquerda(this.personagem.getPosition());
-    else if (this.controles.teclas["KeyE"] && !this.gameOver)
+    const movimentoMouse = this.controles.consumirMovimentoMouse();
+
+    if (!this.gameOver) {
+      this.camera.moverComMouse(
+        movimentoMouse.x,
+        movimentoMouse.y,
+      );
+    }
+
+    if (this.controles.teclas["KeyQ"] && !this.gameOver) 
       this.camera.orbitarDireita(this.personagem.getPosition());
+    else if (this.controles.teclas["KeyE"] && !this.gameOver) 
+      this.camera.orbitarEsquerda(this.personagem.getPosition());
+    const deltaRoda = this.controles.consumirDeltaRoda();
+
+    if (deltaRoda !== 0 && !this.gameOver) {
+      this.camera.ajustarZoom(deltaRoda);
+    }
 
     if (this.controles.teclas["KeyC"] && !this.gameOver) {
       this.camera.modo = (this.camera.modo + 1) % 2;
