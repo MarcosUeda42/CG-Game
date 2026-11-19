@@ -2,6 +2,8 @@ import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 
 const DURACAO_DANO_FALLBACK = 0.5; // segundos, usado se não existir a animação "Damage"
+const DURACAO_TRANSICAO_ATAQUE = 0.05; // duração da pré-animação de ataque 
+const MULTIPLICADOR_CORRIDA = 1.5; // multiplicador da velocidade de movimento ao correr
 
 export default class Personagem {
   constructor(url, scene, controles, cenario, health = 100) {
@@ -18,6 +20,9 @@ export default class Personagem {
     this.currentAction = null;
     this.clock = new THREE.Clock();
     this.velocidade = 3;
+    this.multiplicadorVelocidadeMovimento = 1;
+    this.velocidadeAtaque = 1;
+    this.multiplicadorPreparacaoAtaque  = 2.6;
 
     this.damageMode = false;
     this.morto = false;
@@ -29,11 +34,13 @@ export default class Personagem {
 
     this.meleeStates = [
       {
+        //Ataque 1
         inicio: 0.0,
-        fim: 1.2,
-        hitInicio: 0.7,
-        hitFim: 1,
-        dano: 50,
+        fim: 1.3,
+        hitInicio: 0.9,
+        hitFim: 1.1,
+        dano: 40,
+        velocidade: 1,
         hitbox: {
           tamanho: new THREE.Vector3(1.4, 1.6, 1.6),
           distancia: 1.4,
@@ -42,11 +49,13 @@ export default class Personagem {
         },
       },
       {
-        inicio: 1.4,
+        //Ataque 2
+        inicio: 1.3,
         fim: 2.3,
         hitInicio: 0.7,
         hitFim: 1,
-        dano: 70,
+        dano: 40,
+        velocidade: 1.5,
         hitbox: {
           tamanho: new THREE.Vector3(2.0, 1.6, 1.6),
           distancia: 1.4,
@@ -55,11 +64,13 @@ export default class Personagem {
         },
       },
       {
+        //Ataque 3
         inicio: 2.5,
         fim: 3.5,
         hitInicio: 0.5,
         hitFim: 0.7,
-        dano: 70,
+        dano: 60,
+        velocidade: 0.7,
         hitbox: {
           tamanho: new THREE.Vector3(1.6, 1.8, 2.0),
           distancia: 1.6,
@@ -239,20 +250,44 @@ export default class Personagem {
     }
 
     const passo = this.meleeStates[this.passoMelee];
+    const multiplicadorGolpe = passo.velocidade ?? 1;
     const duracao = passo.fim - passo.inicio;
-    this.tempoAtaque += delta;
+    const acao = this.actions["Attack"];
 
-    if (this.controles.getMouseState() && this.tempoAtaque >= passo.hitInicio)
+    if (acao) {
+      this.tempoAtaque = Math.max(0, acao.time - passo.inicio);
+
+      const preparandoAtaque =
+        this.passoMelee === 0 &&
+        this.tempoAtaque < passo.hitInicio;
+
+      const velocidadeGolpe = this.velocidadeAtaque * multiplicadorGolpe;
+
+      const velocidadeAtual = preparandoAtaque ? velocidadeGolpe * this.multiplicadorPreparacaoAtaque : velocidadeGolpe;
+
+      acao.setEffectiveTimeScale(velocidadeAtual);
+    } else {
+      this.tempoAtaque += delta * this.velocidadeAtaque;
+    }
+
+    if (
+      this.controles.getMouseState() &&
+      this.tempoAtaque >= passo.hitInicio
+    ) {
       this.proximoSolicitado = true;
+    }
 
     if (this.tempoAtaque >= duracao) {
-      const temProximo = this.passoMelee + 1 < this.meleeStates.length;
+      const temProximo =
+        this.passoMelee + 1 < this.meleeStates.length;
 
       if (this.proximoSolicitado && temProximo)
         this.iniciarAtaque(this.passoMelee + 1);
-      else if (this.tempoAtaque >= duracao) this.resetarAtaque();
+      else
+        this.resetarAtaque();
     }
   }
+
   atualizarHitbox() {
     const centro = this.pivot.position.clone();
     centro.add(this.offsetHitbox);
@@ -319,6 +354,9 @@ export default class Personagem {
     this.alvosAtingidos.clear();
     const passo = this.meleeStates[indice];
     const acao = this.actions["Attack"];
+    if (acao) {
+      acao.setEffectiveTimeScale(this.velocidadeAtaque);
+    }
 
     this.passoMelee = indice;
     this.tempoAtaque = 0;
@@ -330,6 +368,13 @@ export default class Personagem {
 
     if (!acao) return;
 
+    const velocidadeInicial =
+    indice === 0
+      ? this.velocidadeAtaque * this.multiplicadorPreparacaoAtaque
+      : this.velocidadeAtaque;
+
+    acao.setEffectiveTimeScale(velocidadeInicial);
+
     if (this.currentAction === acao) {
       acao.paused = false;
       acao.time = passo.inicio;
@@ -338,7 +383,7 @@ export default class Personagem {
       acao.time = passo.inicio;
       acao.enabled = true;
       acao.play();
-      if (this.currentAction) this.currentAction.crossFadeTo(acao, 0.3, true);
+      if (this.currentAction) this.currentAction.crossFadeTo(acao, DURACAO_TRANSICAO_ATAQUE, true);
       this.currentAction = acao;
     }
   }
@@ -393,7 +438,8 @@ export default class Personagem {
     if (this.mixer) this.mixer.update(delta);
 
     if (!this.personagem) return;
-    this.correndo = this.controles.getScrollState();
+    this.correndo = this.controles.getKeyStatus("ShiftLeft") ||
+    this.controles.getKeyStatus("ShiftRight");
 
     const posicaoAnterior = new THREE.Vector3(
       this.pivot.position.x * 0.999,
@@ -433,10 +479,10 @@ export default class Personagem {
     if (this.controles.teclas["KeyA"]) direcao.sub(direitaCamera);
 
     if (direcao.lengthSq() > 0) {
-      if (this.correndo) this.fatorCorrida = 1.5;
+      if (this.correndo) this.fatorCorrida = MULTIPLICADOR_CORRIDA;
       else this.fatorCorrida = 1;
 
-      const passo = this.velocidade * this.fatorCorrida * delta;
+      const passo = this.velocidade * this.fatorCorrida * this.multiplicadorVelocidadeMovimento * delta;
       direcao.normalize();
       this.pivot.position.addScaledVector(direcao, passo);
       const alvo = Math.atan2(direcao.x, direcao.z);
