@@ -84,10 +84,16 @@ class Jogo {
     this.gameOver = true;
     this.controles.liberarMouse();
 
+    const pontosFinais = this.pontuacao.getValor();
+
     if (!this.pontuacaoRegistrada) {
-      this.historico.registrar(this.pontuacao.getValor());
+      this.historico.registrar(pontosFinais);
       this.pontuacaoRegistrada = true;
     }
+
+    document.getElementById("game-over-pontuacao").textContent =
+    `Pontuação final: ${pontosFinais}`;
+
 
     this.gameOverEl.classList.add("visivel");
     document.getElementById("stamina-bar").classList.add("hidden");

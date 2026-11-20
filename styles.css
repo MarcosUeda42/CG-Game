@@ -208,15 +208,31 @@ body {
   transition: opacity 2s ease 2.5s;
 }
 
+#game-over-pontuacao {
+  font-family: Arial, Helvetica, sans-serif;
+  color: white;
+  text-shadow:
+    0 0 20px #000,
+    0 0 40px #600;
+}
+
 .game-over-botoes {
   display: flex;
+  gap: 1rem;
+  justify-content: center;
+}
+
+.game-over-bottom {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   gap: 1rem;
   opacity: 0;
   transition: opacity 1.5s ease 3.5s;
 }
 
 #game-over.visivel h1,
-#game-over.visivel .game-over-botoes {
+#game-over.visivel .game-over-bottom {
   opacity: 1;
 }
 
