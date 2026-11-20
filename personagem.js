@@ -4,6 +4,11 @@ import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 const DURACAO_DANO_FALLBACK = 0.5; // segundos, usado se não existir a animação "Damage"
 const DURACAO_TRANSICAO_ATAQUE = 0.05; // duração da pré-animação de ataque
 const MULTIPLICADOR_CORRIDA = 1.5; // multiplicador da velocidade de movimento ao correr
+const STAMINA_MAXIMA = 100;
+const STAMINA_GASTO_CORRIDA = 25;
+const STAMINA_REGEN = 15;
+const STAMINA_ATRASO_REGEN = 0.8;
+const STAMINA_RECUPERACAO_MIN = 25;
 
 export default class Personagem {
   constructor(url, scene, controles, cenario, health = 100) {
@@ -31,6 +36,12 @@ export default class Personagem {
     this.forcaKnockback = 5;
     this.atritoKnockback = 8;
     this.aoMudarVida = null;
+
+    this.stamina = STAMINA_MAXIMA;
+    this.staminaMax = STAMINA_MAXIMA;
+    this.exausto = false;
+    this.tempoRegenStamina = 0;
+    this.aoMudarStamina = null;
 
     this.meleeStates = [
       {
@@ -435,9 +446,10 @@ export default class Personagem {
     if (this.mixer) this.mixer.update(delta);
 
     if (!this.personagem) return;
-    this.correndo =
+    const apertandoShift =
       this.controles.getKeyStatus("ShiftLeft") ||
       this.controles.getKeyStatus("ShiftRight");
+    this.correndo = false;
 
     const posicaoAnterior = new THREE.Vector3(
       this.pivot.position.x * 0.999,
@@ -451,6 +463,7 @@ export default class Personagem {
     if (this.morto) return;
 
     if (this.damageMode) {
+      this.atualizarStamina(delta, false);
       this.atualizarDano(delta);
       return;
     }
@@ -458,7 +471,10 @@ export default class Personagem {
     this.ataque(delta);
     this.atualizarHitboxAtaque();
 
-    if (this.passoMelee !== -1) return;
+    if (this.passoMelee !== -1) {
+      this.atualizarStamina(delta, false);
+      return;
+    }
 
     const frenteCamera = new THREE.Vector3();
     camera.camera.getWorldDirection(frenteCamera);
@@ -477,8 +493,8 @@ export default class Personagem {
     if (this.controles.teclas["KeyA"]) direcao.sub(direitaCamera);
 
     if (direcao.lengthSq() > 0) {
-      if (this.correndo) this.fatorCorrida = MULTIPLICADOR_CORRIDA;
-      else this.fatorCorrida = 1;
+      this.correndo = this.atualizarStamina(delta, apertandoShift);
+      this.fatorCorrida = this.correndo ? MULTIPLICADOR_CORRIDA : 1;
 
       const passo =
         this.velocidade *
@@ -496,7 +512,10 @@ export default class Personagem {
       this.pivot.rotation.y += diferenca * fator;
 
       this.mudarAnimacao(this.correndo ? "Run" : "Walk");
-    } else this.mudarAnimacao("Idle");
+    } else {
+      this.atualizarStamina(delta, false);
+      this.mudarAnimacao("Idle");
+    }
 
     for (const parede of this.cenario.hitboxesParedes) {
       if (this.hitbox.intersectsBox(parede)) {
@@ -512,6 +531,48 @@ export default class Personagem {
   }
   getHealth() {
     return this.health;
+  }
+  resetarStamina() {
+    this.stamina = this.staminaMax;
+    this.exausto = false;
+    this.tempoRegenStamina = 0;
+    if (this.aoMudarStamina)
+      this.aoMudarStamina(this.stamina, this.staminaMax, false);
+  }
+  atualizarStamina(delta, querCorrer) {
+    const podeCorrer = querCorrer && !this.exausto && this.stamina > 0;
+
+    if (podeCorrer) {
+      this.stamina -= STAMINA_GASTO_CORRIDA * delta;
+      this.tempoRegenStamina = STAMINA_ATRASO_REGEN;
+
+      if (this.stamina <= 0) {
+        this.stamina = 0;
+        this.exausto = true;
+      }
+    } else if (this.tempoRegenStamina > 0) {
+      this.tempoRegenStamina -= delta;
+    } else {
+      this.stamina = Math.min(
+        this.staminaMax,
+        this.stamina + STAMINA_REGEN * delta,
+      );
+    }
+
+    if (this.exausto && this.stamina >= STAMINA_RECUPERACAO_MIN) {
+      this.exausto = false;
+    }
+
+    return podeCorrer;
+  }
+  getStamina() {
+    return this.stamina;
+  }
+  getStaminaMax() {
+    return this.staminaMax;
+  }
+  isExhausted() {
+    return this.exausto;
   }
   verificarAcerto(inimigos) {
     if (!this.ataqueAtivo) return;

@@ -303,3 +303,31 @@ body {
 #history-back-button:hover {
   background: #4562a0;
 }
+
+#stamina-bar {
+  position: fixed;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 300px;
+  height: 24px;
+  background: #333;
+  border: 2px solid #fff;
+  border-radius: 12px;
+  overflow: hidden;
+  z-index: 10;
+  pointer-events: none;
+}
+
+#stamina-fill {
+  width: 100%;
+  height: 100%;
+  background: #f5b82e;
+  transition:
+    width 0.1s linear,
+    background 0.2s ease;
+}
+
+#stamina-bar.exhausted #stamina-fill {
+  background: #c0392b;
+}

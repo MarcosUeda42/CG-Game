@@ -84,6 +84,7 @@ class Jogo {
     }
 
     this.gameOverEl.classList.add("visivel");
+    document.getElementById("stamina-bar").classList.add("hidden");
     document.getElementById("health-bar").classList.add("hidden");
     this.removerInimigos();
   }
@@ -225,6 +226,7 @@ class Jogo {
     this.renderer.draw(this.scene, this.camera.camera);
     if (this.gameOver) this.atualizarSpotGameOver();
     this.ui.updatePlayerHealth();
+    this.ui.updatePlayerStamina();
   };
 
   removerInimigos() {
@@ -240,7 +242,7 @@ window.addEventListener("DOMContentLoaded", () => {
   const titleScreen = document.getElementById("title-screen");
   const healthBar = document.getElementById("health-bar");
   const score = document.getElementById("score");
-
+  const staminaBar = document.getElementById("stamina-bar");
   const historyButton = document.getElementById("history-button");
   const historyScreen = document.getElementById("history-screen");
   const historyList = document.getElementById("history-list");
@@ -274,6 +276,7 @@ window.addEventListener("DOMContentLoaded", () => {
   const iniciarJogo = () => {
     titleScreen.classList.add("hidden");
     healthBar.classList.remove("hidden");
+    staminaBar.classList.remove("hidden");
     score.classList.remove("hidden");
 
     new Jogo(historico).iniciar();
