@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import Projetil from "./projetil.js";
+import Particulas from "./particulas.js";
 
 const ESCALA_MODELO = 0.0085;
 const DURACAO_DANO_FALLBACK = 0.6;
@@ -75,6 +76,12 @@ export default class Inimigo {
     this.healthSprite.scale.set(1.5 / ESCALA_MODELO, 0.19 / ESCALA_MODELO, 1);
     this.healthSprite.position.set(0, 1.0 / ESCALA_MODELO, 0); // ajuste a altura aqui
 
+    this.particulas = new Particulas(scene);
+    this.carregandoMagia = false;
+    this.mao = null;
+    this._posMao = new THREE.Vector3();
+    this.offsetMao = new THREE.Vector3(0, 0, 15);
+
     this.desenharBarra();
   }
   desenharBarra() {
@@ -84,7 +91,7 @@ export default class Inimigo {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     // fundo
-    ctx.fillStyle = "#333333";
+    ctx.fillStyle = "#33333357";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     // preenchimento
@@ -111,6 +118,7 @@ export default class Inimigo {
     }
 
     this.damageMode = true;
+    this.carregandoMagia = false;
 
     if (origem && this.inimigo) {
       this.knockbackVel.subVectors(this.inimigo.position, origem).setY(0);
@@ -163,6 +171,8 @@ export default class Inimigo {
 
       this.scene.add(this.inimigo);
 
+      this.mao = this.inimigo.getObjectByName("mixamorigRightHand");
+
       this.helper = new THREE.Box3Helper(this.hitbox, 0xff0000);
       this.scene.add(this.helper);
 
@@ -206,16 +216,40 @@ export default class Inimigo {
   remover() {
     if (this.removido) return;
     this.removido = true;
+    this.carregandoMagia = false;
+    this.attackMode = false;
 
-    if (this.inimigo) this.scene.remove(this.inimigo); // a sprite sai junto
+    if (this.inimigo) {
+      this.scene.remove(this.inimigo); // a sprite sai junto
+      this.inimigo.traverse((obj) => {
+        if (!obj.isMesh) return;
+        obj.geometry?.dispose();
+        const mats = Array.isArray(obj.material) ? obj.material : [obj.material];
+        mats.forEach((m) => m.dispose());
+      });
+    }
     if (this.helper) this.scene.remove(this.helper);
     this.hitbox.makeEmpty();
+
+    if (this.particulas) {
+      this.particulas.dispose();
+      this.particulas = null;
+    }
 
     this.texture.dispose();
     this.spriteMaterial.dispose();
   }
   atualizar(target, delta, listaProjeteis) {
     if (this.mixer) this.mixer.update(delta);
+    
+    if (this.particulas) {
+      this.particulas.atualizar(delta);
+
+      if (this.carregandoMagia && this.inimigo) {
+        this.particulas.convergir(this.getPosicaoMao(), 2, 0.5, 0.25);
+      }
+    }
+
 
     if (this.health <= 0) {
       this.spriteMaterial.visible = false;
@@ -319,16 +353,16 @@ export default class Inimigo {
     const ATRASO_MS = 300;
 
     this.attackMode = true;
+    this.carregandoMagia = true;
     this.mudarAnimacao("MagicAttack");
 
     const alvoTravado = alvoPos.clone();
     setTimeout(() => {
+      this.carregandoMagia = false;
+
       if (!this.attackMode || this.damageMode || this.health <= 0) return;
 
-      const mao = this.inimigo.getObjectByName("mixamorigRightHand");
-      const origem = new THREE.Vector3();
-      if (mao) mao.getWorldPosition(origem);
-      else origem.copy(this.inimigo.position).setY(1);
+      const origem = this.getPosicaoMao(new THREE.Vector3());
 
       const alvo = alvoTravado.setY(origem.y);
       const direcao = new THREE.Vector3().subVectors(alvo, origem);
@@ -339,10 +373,21 @@ export default class Inimigo {
         .applyAxisAngle(new THREE.Vector3(0, 1, 0), anguloDesvio)
         .normalize();
 
+      this.particulas.explosao(origem, 25, 2.5, 0.5);
       listaProjeteis.push(new Projetil(this.scene, origem, direcao));
     }, ATRASO_MS);
   }
   isDead() {
     return this.health <= 0;
+  }
+  getPosicaoMao(destino = this._posMao) {
+    if (this.mao) {
+      // converte o offset local do osso para o mundo (acompanha a rotação da mão)
+      destino.copy(this.offsetMao);
+      this.mao.localToWorld(destino);
+    } else {
+      destino.copy(this.inimigo.position).setY(1);
+    }
+    return destino;
   }
 }

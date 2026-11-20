@@ -25,7 +25,8 @@ export default class GeradorInimigo {
       this.tempoUltimoInimigo = 0;
     }
 
-    for (let i = 0; i < this.inimigos.length; i++) {
+    // recomendação do cláudio fazer de trás para frente
+    for (let i = this.inimigos.length - 1; i >= 0; i--) {
       const inimigo = this.inimigos[i];
 
       if (inimigo.removido) {
@@ -77,5 +78,12 @@ export default class GeradorInimigo {
 
     novoInimigo.carregar();
     this.inimigos.push(novoInimigo);
+  }
+  removerTodos() {
+    this.ativo = false;
+
+    for (const inimigo of this.inimigos) inimigo.remover();
+
+    this.inimigos.length = 0;
   }
 }
