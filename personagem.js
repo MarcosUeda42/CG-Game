@@ -130,7 +130,7 @@ export default class Personagem {
 
       this.personagem = gltf.scene;
       this.personagem.scale.setScalar(0.01);
-      this.personagem.position.set(0, 1, 0.01);
+      this.personagem.position.set(0, 0.85, 0.01);
 
       this.pivot.position.set(1, 0, 1);
       this.pivot.add(this.personagem);

@@ -11,7 +11,6 @@ export default class GeradorInimigo {
     this.limite = 5;
     this.ativo = true;
   }
-
   atualizar(delta, posJogador, listaProjeteis) {
     if (!this.ativo) return;
 
@@ -36,7 +35,6 @@ export default class GeradorInimigo {
       inimigo.atualizar(posJogador, delta, listaProjeteis);
     }
   }
-
   removerTodos() {
     this.ativo = false;
 
@@ -62,7 +60,6 @@ export default class GeradorInimigo {
 
     this.inimigos.length = 0;
   }
-
   gerarInimigo() {
     const x = Math.random() * 50 - 25;
     const z = Math.random() * 50 - 25;
@@ -71,7 +68,7 @@ export default class GeradorInimigo {
       "./inimigo/model.glb",
       this.scene,
       x,
-      1.2,
+      0.85,
       z,
       0,
       100,

@@ -2,7 +2,7 @@ import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import Projetil from "./projetil.js";
 
-const ESCALA_MODELO = 0.01;
+const ESCALA_MODELO = 0.0085;
 const DURACAO_DANO_FALLBACK = 0.6;
 
 export default class Inimigo {
@@ -77,7 +77,6 @@ export default class Inimigo {
 
     this.desenharBarra();
   }
-
   desenharBarra() {
     const { ctx, canvas } = this;
     const ratio = Math.max(0, this.health) / this.healthMax;
@@ -100,7 +99,6 @@ export default class Inimigo {
 
     this.texture.needsUpdate = true; // envia o novo desenho para a GPU
   }
-
   dano(valor, origem = null) {
     if (this.health <= 0 || this.damageMode) return false;
 
@@ -126,7 +124,6 @@ export default class Inimigo {
     else this.tempoDano = DURACAO_DANO_FALLBACK;
     return true;
   }
-
   registrarMorte() {
     if (this.morteContabilizada) return;
 
@@ -136,13 +133,11 @@ export default class Inimigo {
       this.aoMorrer(this.valorPontos, this);
     }
   }
-
   terminarDano() {
     this.damageMode = false;
     this.knockbackVel.set(0, 0, 0);
     this.mudarAnimacao("Idle");
   }
-
   mudarAnimacao(nome, duracao = 0.1) {
     const nextAction = this.actions[nome];
     if (!nextAction || nextAction === this.currentAction) return;
@@ -157,7 +152,6 @@ export default class Inimigo {
       this.currentAction.crossFadeTo(nextAction, duracao, true);
     this.currentAction = nextAction;
   }
-
   carregar() {
     this.loader.load(this.url, (gltf) => {
       if (this.removido) return;
@@ -209,7 +203,6 @@ export default class Inimigo {
       }
     });
   }
-
   remover() {
     if (this.removido) return;
     this.removido = true;
@@ -221,7 +214,6 @@ export default class Inimigo {
     this.texture.dispose();
     this.spriteMaterial.dispose();
   }
-
   atualizar(target, delta, listaProjeteis) {
     if (this.mixer) this.mixer.update(delta);
 
