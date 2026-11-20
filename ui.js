@@ -8,8 +8,26 @@ export default class UI {
     this.mainHealth = maxHealth;
     this.staminaFill = document.getElementById("stamina-fill");
     this.staminaBar = document.getElementById("stamina-bar");
+    this.buffForca = document.getElementById("buff-forca");
+    this.buffForcaTexto = document.getElementById("buff-forca-texto");
+    this.buffForcaFill = document.getElementById("buff-forca-fill");
 
     this.updatePlayerHealth();
+  }
+  updateBuffForca() {
+    const restante = this.personagem.getTempoBuffForca();
+    const ativo = restante > 0;
+
+    this.buffForca.classList.toggle("hidden", !ativo);
+    if (!ativo) return;
+
+    const total = this.personagem.getDuracaoBuffForca();
+    const pct = total > 0 ? (restante / total) * 100 : 100;
+    const mult = this.personagem.getMultiplicadorDano();
+
+    this.buffForcaFill.style.width = pct + "%";
+    this.buffForcaTexto.textContent = `x${mult} · ${Math.ceil(restante)}s`;
+    this.buffForca.classList.toggle("acabando", restante <= 3);
   }
   updatePlayerStamina() {
     const pct = (this.personagem.getStamina() / this.personagem.getStaminaMax()) * 100;

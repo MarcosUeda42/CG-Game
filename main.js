@@ -92,6 +92,8 @@ class Jogo {
     this.gameOverEl.classList.add("visivel");
     document.getElementById("stamina-bar").classList.add("hidden");
     document.getElementById("health-bar").classList.add("hidden");
+    document.getElementById("buff-forca").classList.add("hidden");
+    document.getElementById("score").classList.add("hidden");
     this.removerInimigos();
   }
 
@@ -240,6 +242,7 @@ class Jogo {
     if (this.gameOver) this.atualizarSpotGameOver();
     this.ui.updatePlayerHealth();
     this.ui.updatePlayerStamina();
+    this.ui.updateBuffForca();
   };
 
   removerInimigos() {

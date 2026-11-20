@@ -38,6 +38,9 @@ export default class Personagem {
     this.aoMudarVida = null;
     this.multiplicadorDano = 1;
     this.tempoBuffForca = 0;
+    this.multiplicadorDano = 1;
+    this.tempoBuffForca = 0;
+    this.duracaoBuffForca = 0;
 
     this.stamina = STAMINA_MAXIMA;
     this.staminaMax = STAMINA_MAXIMA;
@@ -230,7 +233,34 @@ export default class Personagem {
       this.multiplicadorDano = 1;
     }
   }
+  aplicarBuffForca(multiplicador, duracao) {
+    this.multiplicadorDano = multiplicador;
+    this.tempoBuffForca = duracao;
+    this.duracaoBuffForca = duracao;
+  }
+  atualizarBuffs(delta) {
+    if (this.tempoBuffForca <= 0) return;
+
+    this.tempoBuffForca -= delta;
+    if (this.tempoBuffForca <= 0) {
+      this.tempoBuffForca = 0;
+      this.duracaoBuffForca = 0;
+      this.multiplicadorDano = 1;
+    }
+  }
+  getTempoBuffForca() {
+    return this.tempoBuffForca;
+  }
+  getDuracaoBuffForca() {
+    return this.duracaoBuffForca;
+  }
+  getMultiplicadorDano() {
+    return this.multiplicadorDano;
+  }
   iniciarMorte() {
+    this.tempoBuffForca = 0;
+    this.duracaoBuffForca = 0;
+    this.multiplicadorDano = 1;
     this.morto = true;
     this.damageMode = false;
     this.knockbackVel.set(0, 0, 0);
@@ -293,9 +323,7 @@ export default class Personagem {
         : velocidadeGolpe;
 
       acao.setEffectiveTimeScale(velocidadeAtual);
-    } else {
-      this.tempoAtaque += delta * this.velocidadeAtaque;
-    }
+    } else this.tempoAtaque += delta * this.velocidadeAtaque;
 
     if (this.controles.getMouseState() && this.tempoAtaque >= passo.hitInicio) {
       this.proximoSolicitado = true;
@@ -309,7 +337,6 @@ export default class Personagem {
       else this.resetarAtaque();
     }
   }
-
   atualizarHitbox() {
     const centro = this.pivot.position.clone();
     centro.add(this.offsetHitbox);
