@@ -36,6 +36,8 @@ export default class Personagem {
     this.forcaKnockback = 5;
     this.atritoKnockback = 8;
     this.aoMudarVida = null;
+    this.multiplicadorDano = 1;
+    this.tempoBuffForca = 0;
 
     this.stamina = STAMINA_MAXIMA;
     this.staminaMax = STAMINA_MAXIMA;
@@ -214,6 +216,19 @@ export default class Personagem {
     }
 
     return true;
+  }
+  aplicarBuffForca(multiplicador, duracao) {
+    this.multiplicadorDano = multiplicador;
+    this.tempoBuffForca = duracao;
+  }
+  atualizarBuffs(delta) {
+    if (this.tempoBuffForca <= 0) return;
+
+    this.tempoBuffForca -= delta;
+    if (this.tempoBuffForca <= 0) {
+      this.tempoBuffForca = 0;
+      this.multiplicadorDano = 1;
+    }
   }
   iniciarMorte() {
     this.morto = true;
@@ -446,6 +461,9 @@ export default class Personagem {
     if (this.mixer) this.mixer.update(delta);
 
     if (!this.personagem) return;
+    
+    this.atualizarBuffs(delta);
+    
     const apertandoShift =
       this.controles.getKeyStatus("ShiftLeft") ||
       this.controles.getKeyStatus("ShiftRight");
@@ -525,6 +543,12 @@ export default class Personagem {
       }
     }
   }
+  curar(valor) {
+    if (this.morto) return;
+
+    this.health = Math.min(this.healthMax, this.health + valor);
+    if (this.aoMudarVida) this.aoMudarVida(this.health);
+  }
   getPosition() {
     if (this.personagem) return this.pivot.position;
     return new THREE.Vector3(0, 0, 0);
@@ -584,9 +608,8 @@ export default class Personagem {
       if (inimigo.isDead() || this.alvosAtingidos.has(inimigo)) continue;
       if (!this.hitboxAtaque.intersectsBox(inimigo.hitbox)) continue;
 
-      if (inimigo.dano(passo.dano, this.pivot.position)) {
+      if (inimigo.dano(passo.dano * this.multiplicadorDano, this.pivot.position))
         this.alvosAtingidos.add(inimigo);
-      }
     }
   }
 }

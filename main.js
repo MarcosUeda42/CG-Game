@@ -8,6 +8,7 @@ import GeradorInimigo from "./gerador_inimigo.js";
 import UI from "./ui.js";
 import Pontuacao from "./pontuacao.js";
 import HistoricoPontuacao from "./historico_pontuacao.js";
+import { StrengthPowerUp, HealthPowerUp } from "./powerup.js";
 
 // Inicialização das classes e loop de animação
 // Personagem importado do MIXAMO Paladin W + Crouched Walking https://www.mixamo.com/#/
@@ -52,6 +53,13 @@ class Jogo {
     this.gameOver = false;
     this.pausado = false;
     this.gameOverEl = document.getElementById("game-over");
+
+    this.powerups = [
+      new HealthPowerUp(this.scene, new THREE.Vector3(3, 1.7, 3)),
+      new HealthPowerUp(this.scene, new THREE.Vector3(-3, 1.7, 3), 50),
+      new StrengthPowerUp(this.scene, new THREE.Vector3(0, 1.5, 5)),
+      new StrengthPowerUp(this.scene, new THREE.Vector3(0, 1.5, -5), 2, 5),
+    ];
   }
   configurarGameOver() {
     document
@@ -65,14 +73,12 @@ class Jogo {
       .getElementById("gameover-quit-button")
       .addEventListener("click", () => window.location.reload());
   }
-
   configurarRestart() {
     document.getElementById("restart-button").addEventListener("click", () => {
       sessionStorage.setItem("reiniciar", "1");
       window.location.reload();
     });
   }
-
   mostrarGameOver() {
     this.camera.modo = 1;
     this.gameOver = true;
@@ -99,7 +105,6 @@ class Jogo {
     this.gameOverEl.style.setProperty("--x", `${x}%`);
     this.gameOverEl.style.setProperty("--y", `${y}%`);
   }
-
   iniciar() {
     this.cenario.renderizar();
     this.personagem.carregar();
@@ -109,7 +114,6 @@ class Jogo {
     this.configurarRestart();
     this.controles.capturarMouse();
   }
-
   configurarPausa() {
     const pauseMenu = document.getElementById("pause-menu");
     const resumeButton = document.getElementById("resume-button");
@@ -208,6 +212,15 @@ class Jogo {
 
     for (const inimigo of this.geradorInimigo.inimigos)
       this.personagem.verificarAcerto(inimigo, this.scene);
+
+    for (let i = this.powerups.length - 1; i >= 0; i--) {
+      const p = this.powerups[i];
+      p.atualizar(delta);
+
+      if (p.verificarColeta(this.personagem)) {
+        this.powerups.splice(i, 1);
+      }
+    }
 
     for (let i = this.projeteis.length - 1; i >= 0; i--) {
       const p = this.projeteis[i];

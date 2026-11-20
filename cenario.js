@@ -53,7 +53,7 @@ export default class Cenario {
     const loader = new GLTFLoader();
 
     // https://poly.pizza/m/OQvi8PIZ40
-    loader.load("./objetos/Rocks by Quaternius - OQvi8PIZ40.glb", (gltf) => {
+    loader.load("./objetos/rocks.glb", (gltf) => {
       const montanha = gltf.scene;
 
       // modelo, x, y, z, escala, rotação Y
@@ -82,7 +82,7 @@ export default class Cenario {
     texTronco.colorSpace = THREE.SRGBColorSpace;
 
     // https://poly.pizza/m/s6yZuyU2y5
-    loader.load("./objetos/Tree by MaverickFX - s6yZuyU2y5.glb", (gltf) => {
+    loader.load("./objetos/tree.glb", (gltf) => {
       const arvore = gltf.scene;
 
       arvore.traverse((obj) => {
@@ -134,7 +134,7 @@ export default class Cenario {
 
     // https://poly.pizza/m/pNsfJzhXiD
     loader.load(
-      "./objetos/Wooden Torch by Quaternius - pNsfJzhXiD.glb",
+      "./objetos/torch.glb",
       (gltf) => {
         const tocha = gltf.scene;
 
@@ -151,7 +151,7 @@ export default class Cenario {
     const loader = new GLTFLoader();
 
     // https://poly.pizza/m/vUJjrRsFp4
-    loader.load("./objetos/Grass by Quaternius - vUJjrRsFp4.glb", (gltf) => {
+    loader.load("./objetos/grass.glb", (gltf) => {
       const grama = gltf.scene;
 
       for (let i = 0; i < 50; i++) {
