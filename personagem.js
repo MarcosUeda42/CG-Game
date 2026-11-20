@@ -2,7 +2,7 @@ import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 
 const DURACAO_DANO_FALLBACK = 0.5; // segundos, usado se não existir a animação "Damage"
-const DURACAO_TRANSICAO_ATAQUE = 0.05; // duração da pré-animação de ataque 
+const DURACAO_TRANSICAO_ATAQUE = 0.05; // duração da pré-animação de ataque
 const MULTIPLICADOR_CORRIDA = 1.5; // multiplicador da velocidade de movimento ao correr
 
 export default class Personagem {
@@ -22,7 +22,7 @@ export default class Personagem {
     this.velocidade = 3;
     this.multiplicadorVelocidadeMovimento = 1;
     this.velocidadeAtaque = 1;
-    this.multiplicadorPreparacaoAtaque  = 2.6;
+    this.multiplicadorPreparacaoAtaque = 2.6;
 
     this.damageMode = false;
     this.morto = false;
@@ -258,33 +258,29 @@ export default class Personagem {
       this.tempoAtaque = Math.max(0, acao.time - passo.inicio);
 
       const preparandoAtaque =
-        this.passoMelee === 0 &&
-        this.tempoAtaque < passo.hitInicio;
+        this.passoMelee === 0 && this.tempoAtaque < passo.hitInicio;
 
       const velocidadeGolpe = this.velocidadeAtaque * multiplicadorGolpe;
 
-      const velocidadeAtual = preparandoAtaque ? velocidadeGolpe * this.multiplicadorPreparacaoAtaque : velocidadeGolpe;
+      const velocidadeAtual = preparandoAtaque
+        ? velocidadeGolpe * this.multiplicadorPreparacaoAtaque
+        : velocidadeGolpe;
 
       acao.setEffectiveTimeScale(velocidadeAtual);
     } else {
       this.tempoAtaque += delta * this.velocidadeAtaque;
     }
 
-    if (
-      this.controles.getMouseState() &&
-      this.tempoAtaque >= passo.hitInicio
-    ) {
+    if (this.controles.getMouseState() && this.tempoAtaque >= passo.hitInicio) {
       this.proximoSolicitado = true;
     }
 
     if (this.tempoAtaque >= duracao) {
-      const temProximo =
-        this.passoMelee + 1 < this.meleeStates.length;
+      const temProximo = this.passoMelee + 1 < this.meleeStates.length;
 
       if (this.proximoSolicitado && temProximo)
         this.iniciarAtaque(this.passoMelee + 1);
-      else
-        this.resetarAtaque();
+      else this.resetarAtaque();
     }
   }
 
@@ -369,9 +365,9 @@ export default class Personagem {
     if (!acao) return;
 
     const velocidadeInicial =
-    indice === 0
-      ? this.velocidadeAtaque * this.multiplicadorPreparacaoAtaque
-      : this.velocidadeAtaque;
+      indice === 0
+        ? this.velocidadeAtaque * this.multiplicadorPreparacaoAtaque
+        : this.velocidadeAtaque;
 
     acao.setEffectiveTimeScale(velocidadeInicial);
 
@@ -383,7 +379,8 @@ export default class Personagem {
       acao.time = passo.inicio;
       acao.enabled = true;
       acao.play();
-      if (this.currentAction) this.currentAction.crossFadeTo(acao, DURACAO_TRANSICAO_ATAQUE, true);
+      if (this.currentAction)
+        this.currentAction.crossFadeTo(acao, DURACAO_TRANSICAO_ATAQUE, true);
       this.currentAction = acao;
     }
   }
@@ -438,8 +435,9 @@ export default class Personagem {
     if (this.mixer) this.mixer.update(delta);
 
     if (!this.personagem) return;
-    this.correndo = this.controles.getKeyStatus("ShiftLeft") ||
-    this.controles.getKeyStatus("ShiftRight");
+    this.correndo =
+      this.controles.getKeyStatus("ShiftLeft") ||
+      this.controles.getKeyStatus("ShiftRight");
 
     const posicaoAnterior = new THREE.Vector3(
       this.pivot.position.x * 0.999,
@@ -482,7 +480,11 @@ export default class Personagem {
       if (this.correndo) this.fatorCorrida = MULTIPLICADOR_CORRIDA;
       else this.fatorCorrida = 1;
 
-      const passo = this.velocidade * this.fatorCorrida * this.multiplicadorVelocidadeMovimento * delta;
+      const passo =
+        this.velocidade *
+        this.fatorCorrida *
+        this.multiplicadorVelocidadeMovimento *
+        delta;
       direcao.normalize();
       this.pivot.position.addScaledVector(direcao, passo);
       const alvo = Math.atan2(direcao.x, direcao.z);

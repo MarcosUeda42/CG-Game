@@ -6,7 +6,16 @@ const ESCALA_MODELO = 0.01;
 const DURACAO_DANO_FALLBACK = 0.6;
 
 export default class Inimigo {
-  constructor(url, scene, x, y, z, rotacaoY, valorPontos = 100, aoMorrer = null) {
+  constructor(
+    url,
+    scene,
+    x,
+    y,
+    z,
+    rotacaoY,
+    valorPontos = 100,
+    aoMorrer = null,
+  ) {
     this.url = url;
     this.inimigo = null;
     this.loader = new GLTFLoader();
@@ -119,14 +128,14 @@ export default class Inimigo {
   }
 
   registrarMorte() {
-  if (this.morteContabilizada) return;
+    if (this.morteContabilizada) return;
 
-  this.morteContabilizada = true;
+    this.morteContabilizada = true;
 
-  if (typeof this.aoMorrer === "function") {
-    this.aoMorrer(this.valorPontos, this);
+    if (typeof this.aoMorrer === "function") {
+      this.aoMorrer(this.valorPontos, this);
+    }
   }
-}
 
   terminarDano() {
     this.damageMode = false;

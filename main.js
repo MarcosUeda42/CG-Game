@@ -9,7 +9,6 @@ import UI from "./ui.js";
 import Pontuacao from "./pontuacao.js";
 import HistoricoPontuacao from "./historico_pontuacao.js";
 
-
 // Inicialização das classes e loop de animação
 // Personagem importado do MIXAMO Paladin W + Crouched Walking https://www.mixamo.com/#/
 // Inimigo Maynard + Magic Attack 01 (não é mais usado)
@@ -55,10 +54,12 @@ class Jogo {
     this.gameOverEl = document.getElementById("game-over");
   }
   configurarGameOver() {
-    document.getElementById("restart-death-button").addEventListener("click", () => {
-      sessionStorage.setItem("reiniciar", "1");
-      window.location.reload();
-    });
+    document
+      .getElementById("restart-death-button")
+      .addEventListener("click", () => {
+        sessionStorage.setItem("reiniciar", "1");
+        window.location.reload();
+      });
 
     document
       .getElementById("gameover-quit-button")
@@ -71,7 +72,7 @@ class Jogo {
       window.location.reload();
     });
   }
-  
+
   mostrarGameOver() {
     this.camera.modo = 1;
     this.gameOver = true;
@@ -128,8 +129,7 @@ class Jogo {
     };
 
     document.addEventListener("pointerlockchange", () => {
-      const mouseCapturado =
-        document.pointerLockElement === canvas;
+      const mouseCapturado = document.pointerLockElement === canvas;
 
       if (!mouseCapturado) {
         if (!this.gameOver) {
@@ -176,15 +176,12 @@ class Jogo {
     const movimentoMouse = this.controles.consumirMovimentoMouse();
 
     if (!this.gameOver) {
-      this.camera.moverComMouse(
-        movimentoMouse.x,
-        movimentoMouse.y,
-      );
+      this.camera.moverComMouse(movimentoMouse.x, movimentoMouse.y);
     }
 
-    if (this.controles.teclas["KeyQ"] && !this.gameOver) 
+    if (this.controles.teclas["KeyQ"] && !this.gameOver)
       this.camera.orbitarDireita(this.personagem.getPosition());
-    else if (this.controles.teclas["KeyE"] && !this.gameOver) 
+    else if (this.controles.teclas["KeyE"] && !this.gameOver)
       this.camera.orbitarEsquerda(this.personagem.getPosition());
     const deltaRoda = this.controles.consumirDeltaRoda();
 
@@ -249,7 +246,7 @@ window.addEventListener("DOMContentLoaded", () => {
   const historyList = document.getElementById("history-list");
   const historyBackButton = document.getElementById("history-back-button");
   const historico = new HistoricoPontuacao();
-  
+
   const renderizarHistorico = () => {
     const registros = historico.getRegistros().reverse();
 

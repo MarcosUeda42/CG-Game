@@ -19,11 +19,11 @@ export default class UI {
 
     this.healthFill.style.width = pct + "%";
     this.healthFill.style.background =
-      pct > 50 ? "#00ff00" : pct > 25 ? "#fb8c00" : "#ff0000"; 
+      pct > 50 ? "#00ff00" : pct > 25 ? "#fb8c00" : "#ff0000";
   }
   updateScore(valor) {
     if (!this.scoreElement) return;
-      
+
     this.scoreElement.textContent = `Pontos: ${valor}`;
   }
 }

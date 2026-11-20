@@ -75,7 +75,7 @@ export default class GeradorInimigo {
       z,
       0,
       100,
-      this.aoInimigoMorrer
+      this.aoInimigoMorrer,
     );
 
     novoInimigo.carregar();

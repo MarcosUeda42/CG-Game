@@ -5,9 +5,11 @@ Projeto desenvolvido para a disciplina de Computação Gráfica.
 ## Equipe
 
 **Docente**
+
 - Ana Luisa Dine Martins Lemos
 
 **Alunos**
+
 - Davi Torres
 - Erik dos Santos Reis
 - Felipe Tashiro

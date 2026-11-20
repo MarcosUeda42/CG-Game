@@ -76,10 +76,7 @@ export default class Controles {
   }
 
   capturarMouse() {
-    if (
-      this.canvas &&
-      document.pointerLockElement !== this.canvas
-    ) {
+    if (this.canvas && document.pointerLockElement !== this.canvas) {
       this.canvas.requestPointerLock();
     }
   }
