@@ -224,7 +224,9 @@ export default class Inimigo {
       this.inimigo.traverse((obj) => {
         if (!obj.isMesh) return;
         obj.geometry?.dispose();
-        const mats = Array.isArray(obj.material) ? obj.material : [obj.material];
+        const mats = Array.isArray(obj.material)
+          ? obj.material
+          : [obj.material];
         mats.forEach((m) => m.dispose());
       });
     }
@@ -241,7 +243,7 @@ export default class Inimigo {
   }
   atualizar(target, delta, listaProjeteis) {
     if (this.mixer) this.mixer.update(delta);
-    
+
     if (this.particulas) {
       this.particulas.atualizar(delta);
 
@@ -249,7 +251,6 @@ export default class Inimigo {
         this.particulas.convergir(this.getPosicaoMao(), 2, 0.5, 0.25);
       }
     }
-
 
     if (this.health <= 0) {
       this.spriteMaterial.visible = false;

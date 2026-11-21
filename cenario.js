@@ -133,18 +133,15 @@ export default class Cenario {
     const loader = new GLTFLoader();
 
     // https://poly.pizza/m/pNsfJzhXiD
-    loader.load(
-      "./objetos/torch.glb",
-      (gltf) => {
-        const tocha = gltf.scene;
+    loader.load("./objetos/torch.glb", (gltf) => {
+      const tocha = gltf.scene;
 
-        this.adicionarTocha(tocha, -18, 0, 3, 0.75);
-        this.adicionarTocha(tocha, -3, 0, -8, 0.75);
-        this.adicionarTocha(tocha, -7, 0, 9, 0.75);
-        this.adicionarTocha(tocha, 6, 0, -6, 0.75);
-        this.adicionarTocha(tocha, 4, 0, 8, 0.75);
-      },
-    );
+      this.adicionarTocha(tocha, -18, 0, 3, 0.75);
+      this.adicionarTocha(tocha, -3, 0, -8, 0.75);
+      this.adicionarTocha(tocha, -7, 0, 9, 0.75);
+      this.adicionarTocha(tocha, 6, 0, -6, 0.75);
+      this.adicionarTocha(tocha, 4, 0, 8, 0.75);
+    });
   }
 
   criarGrama() {

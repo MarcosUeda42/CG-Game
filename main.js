@@ -92,8 +92,7 @@ class Jogo {
     }
 
     document.getElementById("game-over-pontuacao").textContent =
-    `Pontuação final: ${pontosFinais}`;
-
+      `Pontuação final: ${pontosFinais}`;
 
     this.gameOverEl.classList.add("visivel");
     document.getElementById("stamina-bar").classList.add("hidden");

@@ -174,7 +174,10 @@ export default class Personagem {
       this.hitboxAtaqueHelper.visible = false;
       this.scene.add(this.hitboxAtaqueHelper);
 
-      this.hitboxDefesaHelper = new THREE.Box3Helper(this.hitboxDefesa, 0x00aaff);
+      this.hitboxDefesaHelper = new THREE.Box3Helper(
+        this.hitboxDefesa,
+        0x00aaff,
+      );
       this.hitboxDefesaHelper.visible = false;
       this.scene.add(this.hitboxDefesaHelper);
 
@@ -574,9 +577,9 @@ export default class Personagem {
     if (this.mixer) this.mixer.update(delta);
 
     if (!this.personagem) return;
-    
+
     this.atualizarBuffs(delta);
-    
+
     const apertandoShift =
       this.controles.getKeyStatus("ShiftLeft") ||
       this.controles.getKeyStatus("ShiftRight");
@@ -728,7 +731,9 @@ export default class Personagem {
       if (inimigo.isDead() || this.alvosAtingidos.has(inimigo)) continue;
       if (!this.hitboxAtaque.intersectsBox(inimigo.hitbox)) continue;
 
-      if (inimigo.dano(passo.dano * this.multiplicadorDano, this.pivot.position))
+      if (
+        inimigo.dano(passo.dano * this.multiplicadorDano, this.pivot.position)
+      )
         this.alvosAtingidos.add(inimigo);
     }
   }

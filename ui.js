@@ -30,9 +30,13 @@ export default class UI {
     this.buffForca.classList.toggle("acabando", restante <= 3);
   }
   updatePlayerStamina() {
-    const pct = (this.personagem.getStamina() / this.personagem.getStaminaMax()) * 100;
+    const pct =
+      (this.personagem.getStamina() / this.personagem.getStaminaMax()) * 100;
     this.staminaFill.style.width = pct + "%";
-    this.staminaBar.classList.toggle("exhausted", this.personagem.isExhausted());
+    this.staminaBar.classList.toggle(
+      "exhausted",
+      this.personagem.isExhausted(),
+    );
   }
   updatePlayerHealth() {
     const value = this.personagem.getHealth();

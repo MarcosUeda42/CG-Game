@@ -402,6 +402,10 @@ body {
 }
 
 @keyframes buff-piscar {
-  from { opacity: 1; }
-  to   { opacity: 0.45; }
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0.45;
+  }
 }
