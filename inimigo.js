@@ -1,12 +1,31 @@
 import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+import * as SkeletonUtils from "three/addons/utils/SkeletonUtils.js";
 import Projetil from "./projetil.js";
-import Particulas from "./particulas.js";
+import { ENEMY_CONFIG } from "./config.js";
 
 const ESCALA_MODELO = 0.0085;
 const DURACAO_DANO_FALLBACK = 0.6;
+const loaderModeloInimigo = new GLTFLoader();
+const cacheModelosInimigos = new Map();
+
+function carregarModeloInimigo(url) {
+  if (!cacheModelosInimigos.has(url)) {
+    const promessa = new Promise((resolve, reject) => {
+      loaderModeloInimigo.load(url, resolve, undefined, reject);
+    });
+
+    cacheModelosInimigos.set(url, promessa);
+  }
+
+  return cacheModelosInimigos.get(url);
+}
 
 export default class Inimigo {
+  static preload(url) {
+    return carregarModeloInimigo(url);
+  }
+
   constructor(
     url,
     scene,
@@ -14,12 +33,12 @@ export default class Inimigo {
     y,
     z,
     rotacaoY,
-    valorPontos = 100,
+    valorPontos = ENEMY_CONFIG.recompensa,
     aoMorrer = null,
+    particulas = null,
   ) {
     this.url = url;
     this.inimigo = null;
-    this.loader = new GLTFLoader();
     this.mixer = null;
     this.scene = scene;
     this.clock = new THREE.Clock();
@@ -28,20 +47,21 @@ export default class Inimigo {
     this.posY = y;
     this.posZ = z;
     this.rotacaoY = rotacaoY;
-    this.velocidade = 2.5;
-    this.distanciaMinima = 2;
+    this.velocidade = ENEMY_CONFIG.movimento.velocidade;
+    this.distanciaMinima = ENEMY_CONFIG.movimento.distanciaMinima;
 
     this.damageMode = false;
     this.attackMode = false;
     this.tempoDano = 0;
 
     this.knockbackVel = new THREE.Vector3();
-    this.forcaKnockback = 6;
-    this.atritoKnockback = 8;
+    this.forcaKnockback = ENEMY_CONFIG.knockback.forca;
+    this.atritoKnockback = ENEMY_CONFIG.knockback.atrito;
 
-    this.cooldownAtaque = 6.0;
-    this.tempoDesdeUltimoAtaque = Math.random() * 2.0;
-    this.distanciaDisparo = 15;
+    this.cooldownAtaque = ENEMY_CONFIG.ataque.cooldown;
+    this.tempoDesdeUltimoAtaque =
+      Math.random() * ENEMY_CONFIG.ataque.atrasoInicialAleatorioMax;
+    this.distanciaDisparo = ENEMY_CONFIG.ataque.distanciaDisparo;
 
     this.hitbox = new THREE.Box3();
     this.offsetHitbox = new THREE.Vector3(0, 0, 0);
@@ -49,8 +69,8 @@ export default class Inimigo {
 
     this.actions = {};
 
-    this.health = 100;
-    this.healthMax = 100;
+    this.health = ENEMY_CONFIG.healthMax;
+    this.healthMax = ENEMY_CONFIG.healthMax;
     this.removido = false;
 
     this.valorPontos = valorPontos;
@@ -76,7 +96,7 @@ export default class Inimigo {
     this.healthSprite.scale.set(1.5 / ESCALA_MODELO, 0.19 / ESCALA_MODELO, 1);
     this.healthSprite.position.set(0, 1.0 / ESCALA_MODELO, 0); // ajuste a altura aqui
 
-    this.particulas = new Particulas(scene);
+    this.particulas = particulas;
     this.carregandoMagia = false;
     this.mao = null;
     this._posMao = new THREE.Vector3();
@@ -161,57 +181,61 @@ export default class Inimigo {
     this.currentAction = nextAction;
   }
   carregar() {
-    this.loader.load(this.url, (gltf) => {
-      if (this.removido) return;
+    carregarModeloInimigo(this.url)
+      .then((gltf) => {
+        if (this.removido) return;
 
-      this.inimigo = gltf.scene;
-      this.inimigo.scale.setScalar(ESCALA_MODELO);
-      this.inimigo.position.set(this.posX, this.posY, this.posZ);
-      this.inimigo.add(this.healthSprite);
+        this.inimigo = SkeletonUtils.clone(gltf.scene);
+        this.inimigo.scale.setScalar(ESCALA_MODELO);
+        this.inimigo.position.set(this.posX, this.posY, this.posZ);
+        this.inimigo.add(this.healthSprite);
 
-      this.scene.add(this.inimigo);
+        this.scene.add(this.inimigo);
 
-      this.mao = this.inimigo.getObjectByName("mixamorigRightHand");
+        this.mao = this.inimigo.getObjectByName("mixamorigRightHand");
 
-      this.helper = new THREE.Box3Helper(this.hitbox, 0xff0000);
-      this.scene.add(this.helper);
+        this.helper = new THREE.Box3Helper(this.hitbox, 0xff0000);
+        this.scene.add(this.helper);
 
-      this.mixer = new THREE.AnimationMixer(this.inimigo);
-      gltf.animations.forEach((clip) => {
-        this.actions[clip.name] = this.mixer.clipAction(clip);
+        this.mixer = new THREE.AnimationMixer(this.inimigo);
+        gltf.animations.forEach((clip) => {
+          this.actions[clip.name] = this.mixer.clipAction(clip);
+        });
+
+        const acaoDano = this.actions["Damage"];
+        if (acaoDano) {
+          acaoDano.setLoop(THREE.LoopOnce, 1);
+          acaoDano.clampWhenFinished = true;
+        }
+
+        const acaoMorte = this.actions["Death"];
+        if (acaoMorte) {
+          acaoMorte.setLoop(THREE.LoopOnce, 1);
+          acaoMorte.clampWhenFinished = true;
+        }
+
+        const acaoDisparo = this.actions["MagicAttack"];
+        if (acaoDisparo) {
+          acaoDisparo.setLoop(THREE.LoopOnce, 1);
+          acaoDisparo.clampWhenFinished = true;
+        }
+
+        // quando a animação de dano termina, sai do damageMode
+        this.mixer.addEventListener("finished", (e) => {
+          if (e.action === this.actions["Damage"]) this.terminarDano();
+          else if (e.action === this.actions["Death"]) this.remover();
+          else if (e.action === this.actions["MagicAttack"])
+            this.terminarDisparo();
+        });
+
+        if (this.actions["Idle"]) {
+          this.currentAction = this.actions["Idle"];
+          this.currentAction.play();
+        }
+      })
+      .catch((erro) => {
+        console.error("Erro ao carregar modelo do inimigo:", erro);
       });
-
-      const acaoDano = this.actions["Damage"];
-      if (acaoDano) {
-        acaoDano.setLoop(THREE.LoopOnce, 1);
-        acaoDano.clampWhenFinished = true;
-      }
-
-      const acaoMorte = this.actions["Death"];
-      if (acaoMorte) {
-        acaoMorte.setLoop(THREE.LoopOnce, 1);
-        acaoMorte.clampWhenFinished = true;
-      }
-
-      const acaoDisparo = this.actions["MagicAttack"];
-      if (acaoDisparo) {
-        acaoDisparo.setLoop(THREE.LoopOnce, 1);
-        acaoDisparo.clampWhenFinished = true;
-      }
-
-      // quando a animação de dano termina, sai do damageMode
-      this.mixer.addEventListener("finished", (e) => {
-        if (e.action === this.actions["Damage"]) this.terminarDano();
-        else if (e.action === this.actions["Death"]) this.remover();
-        else if (e.action === this.actions["MagicAttack"])
-          this.terminarDisparo();
-      });
-
-      if (this.actions["Idle"]) {
-        this.currentAction = this.actions["Idle"];
-        this.currentAction.play();
-      }
-    });
   }
   remover() {
     if (this.removido) return;
@@ -219,24 +243,19 @@ export default class Inimigo {
     this.carregandoMagia = false;
     this.attackMode = false;
 
-    if (this.inimigo) {
-      this.scene.remove(this.inimigo); // a sprite sai junto
-      this.inimigo.traverse((obj) => {
-        if (!obj.isMesh) return;
-        obj.geometry?.dispose();
-        const mats = Array.isArray(obj.material)
-          ? obj.material
-          : [obj.material];
-        mats.forEach((m) => m.dispose());
-      });
+    if (this.mixer && this.inimigo) {
+      this.mixer.stopAllAction();
+      this.mixer.uncacheRoot(this.inimigo);
     }
+
+    if (this.inimigo) {
+      this.scene.remove(this.inimigo);
+      this.inimigo = null;
+    }
+    this.mao = null;
+
     if (this.helper) this.scene.remove(this.helper);
     this.hitbox.makeEmpty();
-
-    if (this.particulas) {
-      this.particulas.dispose();
-      this.particulas = null;
-    }
 
     this.texture.dispose();
     this.spriteMaterial.dispose();
@@ -244,12 +263,8 @@ export default class Inimigo {
   atualizar(target, delta, listaProjeteis) {
     if (this.mixer) this.mixer.update(delta);
 
-    if (this.particulas) {
-      this.particulas.atualizar(delta);
-
-      if (this.carregandoMagia && this.inimigo) {
-        this.particulas.convergir(this.getPosicaoMao(), 2, 0.5, 0.25);
-      }
+    if (this.particulas && this.carregandoMagia && this.inimigo) {
+      this.particulas.convergir(this.getPosicaoMao(), 2, 0.5, 0.25);
     }
 
     if (this.health <= 0) {
@@ -374,9 +389,16 @@ export default class Inimigo {
         .applyAxisAngle(new THREE.Vector3(0, 1, 0), anguloDesvio)
         .normalize();
 
-      this.particulas.explosao(origem, 25, 2.5, 0.5);
+      this.particulas?.explosao(origem, 25, 2.5, 0.5);
       listaProjeteis.push(new Projetil(this.scene, origem, direcao));
     }, ATRASO_MS);
+  }
+  getPosition() {
+    if (this.inimigo) {
+      return this.inimigo.position.clone();
+    }
+
+    return new THREE.Vector3(this.posX, this.posY, this.posZ);
   }
   isDead() {
     return this.health <= 0;

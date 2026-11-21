@@ -19,6 +19,7 @@ export default class Particulas {
     this.max = max;
     this.cor = new THREE.Color(cor);
     this.proximo = 0;
+    this.ativos = 0;
 
     this.posicoes = new Float32Array(max * 3);
     this.cores = new Float32Array(max * 3);
@@ -37,6 +38,9 @@ export default class Particulas {
     );
 
     this.textura = criarTexturaCirculo();
+    this.textura.generateMipmaps = false;
+    this.textura.minFilter = THREE.LinearFilter;
+    this.textura.magFilter = THREE.LinearFilter;
     this.material = new THREE.PointsMaterial({
       size: tamanho,
       map: this.textura,
@@ -53,6 +57,9 @@ export default class Particulas {
 
   _spawn(px, py, pz, vx, vy, vz, vida) {
     const i = this.proximo;
+    if (this.vida[i] <= 0) {
+      this.ativos++;
+    }
     this.proximo = (this.proximo + 1) % this.max; // pool circular: reaproveita a mais antiga
 
     this.posicoes.set([px, py, pz], i * 3);
@@ -97,14 +104,25 @@ export default class Particulas {
   }
 
   atualizar(delta) {
+    if (this.ativos === 0) return;
+
+    let alterado = false;
+
     for (let i = 0; i < this.max; i++) {
       if (this.vida[i] <= 0) continue;
 
+      alterado = true;
       this.vida[i] -= delta;
       const i3 = i * 3;
 
       if (this.vida[i] <= 0) {
-        this.cores[i3] = this.cores[i3 + 1] = this.cores[i3 + 2] = 0;
+        this.vida[i] = 0;
+        this.ativos = Math.max(0, this.ativos - 1);
+
+        this.cores[i3] = 0;
+        this.cores[i3 + 1] = 0;
+        this.cores[i3 + 2] = 0;
+
         continue;
       }
 
@@ -118,8 +136,10 @@ export default class Particulas {
       this.cores[i3 + 2] = this.cor.b * f;
     }
 
-    this.geometria.attributes.position.needsUpdate = true;
-    this.geometria.attributes.color.needsUpdate = true;
+    if (alterado) {
+      this.geometria.attributes.position.needsUpdate = true;
+      this.geometria.attributes.color.needsUpdate = true;
+    }
   }
 
   dispose() {

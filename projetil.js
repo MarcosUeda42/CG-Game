@@ -1,13 +1,24 @@
 // projetil.js
 import * as THREE from "three";
+import { PROJECTILE_CONFIG } from "./config.js";
+
+const GEOMETRIA_PROJETIL = new THREE.SphereGeometry(
+  PROJECTILE_CONFIG.raio,
+  8,
+  8,
+);
+
+const MATERIAL_PROJETIL = new THREE.MeshBasicMaterial({
+  color: 0xff4500,
+});
 
 export default class Projetil {
   constructor(
     scene,
     posOrigem,
     dirDisparo,
-    velocidade = 7,
-    alcanceMaxTempo = 4.0,
+    velocidade = PROJECTILE_CONFIG.velocidade,
+    alcanceMaxTempo = PROJECTILE_CONFIG.tempoVida,
   ) {
     this.scene = scene;
     this.velocidade = velocidade;
@@ -17,17 +28,16 @@ export default class Projetil {
 
     this.direcao = dirDisparo.clone().normalize();
 
-    const geo = new THREE.SphereGeometry(0.2, 8, 8);
-    const mat = new THREE.MeshBasicMaterial({ color: 0xff4500 });
-    this.mesh = new THREE.Mesh(geo, mat);
+    this.mesh = new THREE.Mesh(GEOMETRIA_PROJETIL, MATERIAL_PROJETIL);
     this.mesh.position.copy(posOrigem);
     this.scene.add(this.mesh);
 
-    this.luz = new THREE.PointLight(0xff6600, 2, 6);
-    this.mesh.add(this.luz);
-
     this.hitbox = new THREE.Box3();
-    this.tamanhoHitbox = new THREE.Vector3(0.4, 0.4, 0.4);
+    this.tamanhoHitbox = new THREE.Vector3(
+      PROJECTILE_CONFIG.hitbox,
+      PROJECTILE_CONFIG.hitbox,
+      PROJECTILE_CONFIG.hitbox,
+    );
     this.atualizarHitbox();
   }
 
@@ -52,11 +62,13 @@ export default class Projetil {
   }
 
   destruir() {
+    if (!this.ativo) return;
+
     this.ativo = false;
+
     if (this.mesh) {
       this.scene.remove(this.mesh);
-      this.mesh.geometry.dispose();
-      this.mesh.material.dispose();
+      this.mesh = null;
     }
   }
 }

@@ -1,23 +1,19 @@
 import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+import { OBB } from "three/addons/math/OBB.js";
+import { PLAYER_CONFIG } from "./config.js";
 
 const DURACAO_DANO_FALLBACK = 0.5; // segundos, usado se não existir a animação "Damage"
 const DURACAO_TRANSICAO_ATAQUE = 0.05; // duração da pré-animação de ataque
-const MULTIPLICADOR_CORRIDA = 1.5; // multiplicador da velocidade de movimento ao correr
-const STAMINA_MAXIMA = 100;
-const STAMINA_GASTO_CORRIDA = 25;
-const STAMINA_REGEN = 15;
-const STAMINA_ATRASO_REGEN = 0.8;
-const STAMINA_RECUPERACAO_MIN = 25;
-const DEFESA_ATRASO = 0.15;
-const DEFESA_HITBOX = {
-  tamanho: new THREE.Vector3(0.5, 1.5, 0.1),
-  distancia: 0.7,
-  altura: 0.9,
-};
 
 export default class Personagem {
-  constructor(url, scene, controles, cenario, health = 100) {
+  constructor(
+    url,
+    scene,
+    controles,
+    cenario,
+    health = PLAYER_CONFIG.healthMax,
+  ) {
     this.personagem = null;
     this.url = url;
     this.controles = controles;
@@ -30,26 +26,25 @@ export default class Personagem {
     this.healthMax = health;
     this.currentAction = null;
     this.clock = new THREE.Clock();
-    this.velocidade = 3;
+    this.velocidade = PLAYER_CONFIG.movimento.velocidadeBase;
     this.multiplicadorVelocidadeMovimento = 1;
-    this.velocidadeAtaque = 1;
-    this.multiplicadorPreparacaoAtaque = 2.6;
+    this.velocidadeAtaque = PLAYER_CONFIG.ataque.velocidadeBase;
+    this.multiplicadorPreparacaoAtaque =
+      PLAYER_CONFIG.ataque.multiplicadorPreparacao;
 
     this.damageMode = false;
     this.morto = false;
     this.tempoDano = 0;
     this.knockbackVel = new THREE.Vector3();
-    this.forcaKnockback = 5;
-    this.atritoKnockback = 8;
+    this.forcaKnockback = PLAYER_CONFIG.knockback.forca;
+    this.atritoKnockback = PLAYER_CONFIG.knockback.atrito;
     this.aoMudarVida = null;
-    this.multiplicadorDano = 1;
-    this.tempoBuffForca = 0;
     this.multiplicadorDano = 1;
     this.tempoBuffForca = 0;
     this.duracaoBuffForca = 0;
 
-    this.stamina = STAMINA_MAXIMA;
-    this.staminaMax = STAMINA_MAXIMA;
+    this.stamina = PLAYER_CONFIG.stamina.maxima;
+    this.staminaMax = PLAYER_CONFIG.stamina.maxima;
     this.exausto = false;
     this.tempoRegenStamina = 0;
     this.aoMudarStamina = null;
@@ -58,8 +53,13 @@ export default class Personagem {
     this.defesaAtiva = false;
     this.tempoDefesa = 0;
     this.aoBloquear = null;
-    this.hitboxDefesa = new THREE.Box3();
-    this.hitboxDefesa.makeEmpty();
+    this.hitboxDefesa = new OBB(
+      new THREE.Vector3(),
+      new THREE.Vector3(0, 0, 0),
+      new THREE.Matrix3(),
+    );
+    this.matrizRotacaoDefesa = new THREE.Matrix4();
+    this.rotacaoDefesa = new THREE.Matrix3();
     this.hitboxDefesaHelper = null;
 
     this.meleeStates = [
@@ -174,11 +174,17 @@ export default class Personagem {
       this.hitboxAtaqueHelper.visible = false;
       this.scene.add(this.hitboxAtaqueHelper);
 
-      this.hitboxDefesaHelper = new THREE.Box3Helper(
-        this.hitboxDefesa,
-        0x00aaff,
+      this.hitboxDefesaHelper = new THREE.Mesh(
+        new THREE.BoxGeometry(1, 1, 1),
+        new THREE.MeshBasicMaterial({
+          color: 0x00aaff,
+          wireframe: true,
+          depthTest: false,
+        }),
       );
+
       this.hitboxDefesaHelper.visible = false;
+      this.hitboxDefesaHelper.renderOrder = 1000;
       this.scene.add(this.hitboxDefesaHelper);
 
       this.mixer = new THREE.AnimationMixer(this.personagem);
@@ -250,19 +256,6 @@ export default class Personagem {
     }
 
     return true;
-  }
-  aplicarBuffForca(multiplicador, duracao) {
-    this.multiplicadorDano = multiplicador;
-    this.tempoBuffForca = duracao;
-  }
-  atualizarBuffs(delta) {
-    if (this.tempoBuffForca <= 0) return;
-
-    this.tempoBuffForca -= delta;
-    if (this.tempoBuffForca <= 0) {
-      this.tempoBuffForca = 0;
-      this.multiplicadorDano = 1;
-    }
   }
   aplicarBuffForca(multiplicador, duracao) {
     this.multiplicadorDano = multiplicador;
@@ -384,7 +377,8 @@ export default class Personagem {
     }
 
     this.tempoDefesa += delta;
-    this.defesaAtiva = this.tempoDefesa >= DEFESA_ATRASO;
+    this.defesaAtiva =
+      this.tempoDefesa >= PLAYER_CONFIG.defesa.atraso;
     this.atualizarHitboxDefesa();
   }
   atualizarHitboxDefesa() {
@@ -392,23 +386,30 @@ export default class Personagem {
     const sen = Math.sin(ang);
     const cos = Math.cos(ang);
 
-    const { tamanho, distancia, altura } = DEFESA_HITBOX;
-
-    const centro = this.pivot.position.clone();
-    centro.x += sen * distancia;
-    centro.z += cos * distancia;
-    centro.y += altura;
-
-    const tam = new THREE.Vector3(
-      Math.abs(cos) * tamanho.x + Math.abs(sen) * tamanho.z,
-      tamanho.y,
-      Math.abs(sen) * tamanho.x + Math.abs(cos) * tamanho.z,
+    const tamanho = new THREE.Vector3(
+      PLAYER_CONFIG.defesa.hitbox.largura,
+      PLAYER_CONFIG.defesa.hitbox.altura,
+      PLAYER_CONFIG.defesa.hitbox.profundidade,
     );
 
-    this.hitboxDefesa.setFromCenterAndSize(centro, tam);
+    const centro = this.pivot.position.clone();
+    centro.x += sen * PLAYER_CONFIG.defesa.hitbox.distancia;
+    centro.z += cos * PLAYER_CONFIG.defesa.hitbox.distancia;
+    centro.y += PLAYER_CONFIG.defesa.hitbox.alturaCentro;
+
+    this.matrizRotacaoDefesa.makeRotationY(ang);
+    this.rotacaoDefesa.setFromMatrix4(this.matrizRotacaoDefesa);
+
+    this.hitboxDefesa.center.copy(centro);
+    this.hitboxDefesa.halfSize.copy(tamanho).multiplyScalar(0.5);
+    this.hitboxDefesa.rotation.copy(this.rotacaoDefesa);
 
     if (this.hitboxDefesaHelper) {
       this.hitboxDefesaHelper.visible = this.debugHitbox;
+      this.hitboxDefesaHelper.position.copy(centro);
+      this.hitboxDefesaHelper.scale.copy(tamanho);
+      this.hitboxDefesaHelper.rotation.set(0, ang, 0);
+
       this.hitboxDefesaHelper.material.color.setHex(
         this.defesaAtiva ? 0x00aaff : 0x888888,
       );
@@ -416,14 +417,28 @@ export default class Personagem {
   }
   esconderHitboxDefesa() {
     this.defesaAtiva = false;
-    this.hitboxDefesa.makeEmpty();
-    if (this.hitboxDefesaHelper) this.hitboxDefesaHelper.visible = false;
+    this.hitboxDefesa.halfSize.set(0, 0, 0);
+
+    if (this.hitboxDefesaHelper) {
+      this.hitboxDefesaHelper.visible = false;
+    }
   }
   bloquear(hitboxAtacante) {
     if (this.morto || !this.defesaAtiva) return false;
-    if (!this.hitboxDefesa.intersectsBox(hitboxAtacante)) return false;
+    if (!this.hitboxDefesa.intersectsBox3(hitboxAtacante)) return false;
+
+    if (this.stamina < PLAYER_CONFIG.defesa.custoBloqueio) return false;
+
+    this.stamina -= PLAYER_CONFIG.defesa.custoBloqueio;
+    this.tempoRegenStamina = PLAYER_CONFIG.stamina.atrasoRegeneracao;
+
+    if (this.stamina <= 0) {
+      this.stamina = 0;
+      this.exausto = true;
+    }
 
     if (this.aoBloquear) this.aoBloquear(hitboxAtacante);
+
     return true;
   }
   atualizarHitbox() {
@@ -635,7 +650,9 @@ export default class Personagem {
 
     if (direcao.lengthSq() > 0) {
       this.correndo = this.atualizarStamina(delta, apertandoShift);
-      this.fatorCorrida = this.correndo ? MULTIPLICADOR_CORRIDA : 1;
+      this.fatorCorrida = this.correndo
+        ? PLAYER_CONFIG.movimento.multiplicadorCorrida
+        : 1;
 
       const passo =
         this.velocidade *
@@ -679,6 +696,19 @@ export default class Personagem {
   getHealth() {
     return this.health;
   }
+  getHealthMax() {
+    return this.healthMax;
+  }
+  aumentarVidaMaxima(valor) {
+    if (valor <= 0) return;
+
+    this.healthMax += valor;
+    this.health = Math.min(this.healthMax, this.health + valor);
+
+    if (this.aoMudarVida) {
+      this.aoMudarVida(this.health);
+    }
+  }
   resetarStamina() {
     this.stamina = this.staminaMax;
     this.exausto = false;
@@ -690,8 +720,8 @@ export default class Personagem {
     const podeCorrer = querCorrer && !this.exausto && this.stamina > 0;
 
     if (podeCorrer) {
-      this.stamina -= STAMINA_GASTO_CORRIDA * delta;
-      this.tempoRegenStamina = STAMINA_ATRASO_REGEN;
+      this.stamina -= PLAYER_CONFIG.stamina.gastoCorrida * delta;
+      this.tempoRegenStamina = PLAYER_CONFIG.stamina.atrasoRegeneracao;
 
       if (this.stamina <= 0) {
         this.stamina = 0;
@@ -702,11 +732,14 @@ export default class Personagem {
     } else {
       this.stamina = Math.min(
         this.staminaMax,
-        this.stamina + STAMINA_REGEN * delta,
+        this.stamina + PLAYER_CONFIG.stamina.regeneracao * delta,
       );
     }
 
-    if (this.exausto && this.stamina >= STAMINA_RECUPERACAO_MIN) {
+    if (
+      this.exausto &&
+      this.stamina >= PLAYER_CONFIG.stamina.recuperacaoMinima
+    ) {
       this.exausto = false;
     }
 
@@ -717,6 +750,20 @@ export default class Personagem {
   }
   getStaminaMax() {
     return this.staminaMax;
+  }
+  aumentarStaminaMaxima(valor) {
+    if (valor <= 0) return;
+
+    this.staminaMax += valor;
+    this.stamina = Math.min(this.staminaMax, this.stamina + valor);
+
+    if (this.aoMudarStamina) {
+      this.aoMudarStamina(
+        this.stamina,
+        this.staminaMax,
+        this.exausto,
+      );
+    }
   }
   isExhausted() {
     return this.exausto;

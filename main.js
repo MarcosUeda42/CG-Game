@@ -9,6 +9,7 @@ import UI from "./ui.js";
 import Pontuacao from "./pontuacao.js";
 import HistoricoPontuacao from "./historico_pontuacao.js";
 import { StrengthPowerUp, HealthPowerUp } from "./powerup.js";
+import { POWERUP_CONFIG, PROJECTILE_CONFIG } from "./config.js";
 
 // Inicialização das classes e loop de animação
 // Personagem importado do MIXAMO Paladin W + Crouched Walking https://www.mixamo.com/#/
@@ -43,10 +44,15 @@ class Jogo {
     this.historico = historico;
     this.pontuacaoRegistrada = false;
 
-    this.geradorInimigo = new GeradorInimigo(this.scene, (pontos) => {
-      const novoValor = this.pontuacao.adicionar(pontos);
-      this.ui.updateScore(novoValor);
-    });
+    this.geradorInimigo = new GeradorInimigo(
+      this.scene,
+      (pontos, inimigo) => {
+        const novoValor = this.pontuacao.adicionar(pontos);
+        this.ui.updateScore(novoValor);
+
+        this.tentarDroparPowerUp(inimigo);
+      },
+    );
     this.clock = new THREE.Clock();
     this.projeteis = [];
 
@@ -55,11 +61,44 @@ class Jogo {
     this.gameOverEl = document.getElementById("game-over");
 
     this.powerups = [
-      new HealthPowerUp(this.scene, new THREE.Vector3(3, 1.7, 3)),
-      new HealthPowerUp(this.scene, new THREE.Vector3(-3, 1.7, 3), 50),
-      new StrengthPowerUp(this.scene, new THREE.Vector3(0, 1.5, 5), 2),
-      new StrengthPowerUp(this.scene, new THREE.Vector3(0, 1.5, -5), 5, 5),
+      new HealthPowerUp(
+        this.scene,
+        new THREE.Vector3(-2, 1.7, 3),
+        POWERUP_CONFIG.health.cura,
+      ),
+      new StrengthPowerUp(
+        this.scene,
+        new THREE.Vector3(2, 1.5, 3),
+        POWERUP_CONFIG.strength.multiplicador,
+        POWERUP_CONFIG.strength.duracao,
+      ),
     ];
+  }
+  tentarDroparPowerUp(inimigo) {
+    if (!inimigo || Math.random() >= POWERUP_CONFIG.chanceDrop) return;
+
+    const posicao = inimigo.getPosition();
+
+    if (Math.random() < POWERUP_CONFIG.chanceHealth) {
+      posicao.y = 1.7;
+
+      this.powerups.push(
+        new HealthPowerUp(this.scene, posicao, POWERUP_CONFIG.health.cura),
+      );
+
+      return;
+    }
+
+    posicao.y = 1.5;
+
+    this.powerups.push(
+      new StrengthPowerUp(
+        this.scene,
+        posicao,
+        POWERUP_CONFIG.strength.multiplicador,
+        POWERUP_CONFIG.strength.duracao,
+      ),
+    );
   }
   configurarGameOver() {
     document
@@ -240,7 +279,7 @@ class Jogo {
       }
 
       if (p.hitbox.intersectsBox(this.personagem.hitbox)) {
-        this.personagem.dano(10, p);
+        this.personagem.dano(PROJECTILE_CONFIG.dano, p);
         p.destruir();
         this.projeteis.splice(i, 1);
         continue;

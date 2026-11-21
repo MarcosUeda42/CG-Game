@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { CAMERA_CONFIG } from "./config.js";
 
 // classe da camera define perspectiva e posição
 export default class Camera {
@@ -22,11 +23,11 @@ export default class Camera {
     this.anguloVerticalMinimo = THREE.MathUtils.degToRad(5);
     this.anguloVerticalMaximo = THREE.MathUtils.degToRad(75);
 
-    this.sensibilidadeMouse = 0.0015;
+    this.sensibilidadeMouse = CAMERA_CONFIG.sensibilidadeMouse;
     this.zoom = [1, 1];
-    this.zoomMinimo = 0.5;
-    this.zoomMaximo = 1.3;
-    this.sensibilidadeZoom = 0.001;
+    this.zoomMinimo = CAMERA_CONFIG.zoomMinimo;
+    this.zoomMaximo = CAMERA_CONFIG.zoomMaximo;
+    this.sensibilidadeZoom = CAMERA_CONFIG.sensibilidadeZoom;
 
     this.modo = 1;
   }
