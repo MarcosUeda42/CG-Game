@@ -2,6 +2,7 @@ export default class Controles {
   constructor(canvas = null) {
     this.teclas = {};
     this.mousePressionado = false;
+    this.mouseDireitoPressionado = false;
     this.deltaRoda = 0;
     this.movimentoMouseX = 0;
     this.movimentoMouseY = 0;
@@ -19,10 +20,13 @@ export default class Controles {
     });
     window.addEventListener("mousedown", (e) => {
       if (e.button === 0) this.mousePressionado = true;
+      else if (e.button === 2) this.mouseDireitoPressionado = true;
     });
     window.addEventListener("mouseup", (e) => {
       if (e.button === 0) this.mousePressionado = false;
+      else if (e.button === 2) this.mouseDireitoPressionado = false;
     });
+    window.addEventListener("contextmenu", (e) => e.preventDefault());
     window.addEventListener("wheel", (e) => {
       this.deltaRoda += e.deltaY;
     });
@@ -37,6 +41,7 @@ export default class Controles {
     window.addEventListener("blur", () => {
       this.teclas = {};
       this.mousePressionado = false;
+      this.mouseDireitoPressionado = false;
     });
 
     if (canvas) {
@@ -50,11 +55,12 @@ export default class Controles {
       });
     }
   }
-
   getMouseState() {
     return this.mousePressionado;
   }
-
+  getRightMouseState() {
+    return this.mouseDireitoPressionado;
+  }
   consumirDeltaRoda() {
     const delta = this.deltaRoda;
     this.deltaRoda = 0;

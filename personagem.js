@@ -9,6 +9,12 @@ const STAMINA_GASTO_CORRIDA = 25;
 const STAMINA_REGEN = 15;
 const STAMINA_ATRASO_REGEN = 0.8;
 const STAMINA_RECUPERACAO_MIN = 25;
+const DEFESA_ATRASO = 0.15;
+const DEFESA_HITBOX = {
+  tamanho: new THREE.Vector3(0.5, 1.5, 0.1),
+  distancia: 0.7,
+  altura: 0.9,
+};
 
 export default class Personagem {
   constructor(url, scene, controles, cenario, health = 100) {
@@ -47,6 +53,14 @@ export default class Personagem {
     this.exausto = false;
     this.tempoRegenStamina = 0;
     this.aoMudarStamina = null;
+
+    this.defendendo = false;
+    this.defesaAtiva = false;
+    this.tempoDefesa = 0;
+    this.aoBloquear = null;
+    this.hitboxDefesa = new THREE.Box3();
+    this.hitboxDefesa.makeEmpty();
+    this.hitboxDefesaHelper = null;
 
     this.meleeStates = [
       {
@@ -160,6 +174,10 @@ export default class Personagem {
       this.hitboxAtaqueHelper.visible = false;
       this.scene.add(this.hitboxAtaqueHelper);
 
+      this.hitboxDefesaHelper = new THREE.Box3Helper(this.hitboxDefesa, 0x00aaff);
+      this.hitboxDefesaHelper.visible = false;
+      this.scene.add(this.hitboxDefesaHelper);
+
       this.mixer = new THREE.AnimationMixer(this.personagem);
       gltf.animations.forEach((clip) => {
         this.actions[clip.name] = this.mixer.clipAction(clip);
@@ -181,6 +199,12 @@ export default class Personagem {
         acaoMorte.clampWhenFinished = true;
       }
 
+      const acaoDefesa = this.actions["Defense"];
+      if (acaoDefesa) {
+        acaoDefesa.setLoop(THREE.LoopOnce, 1);
+        acaoDefesa.clampWhenFinished = true;
+      }
+
       // quando a animação de dano termina, sai do damageMode
       this.mixer.addEventListener("finished", (e) => {
         if (e.action === this.actions["Damage"]) this.terminarDano();
@@ -189,6 +213,10 @@ export default class Personagem {
   }
   dano(valor, origem = null) {
     if (this.morto || this.damageMode || !this.personagem) return false;
+
+    this.defendendo = false;
+    this.tempoDefesa = 0;
+    this.esconderHitboxDefesa();
 
     this.health = Math.max(0, this.health - valor);
     if (this.aoMudarVida) this.aoMudarVida(this.health);
@@ -264,6 +292,8 @@ export default class Personagem {
     this.morto = true;
     this.damageMode = false;
     this.knockbackVel.set(0, 0, 0);
+    this.esconderHitboxDefesa();
+    this.defendendo = false;
 
     if (this.actions["Death"]) this.mudarAnimacao("Death");
     else this.mudarAnimacao("Idle");
@@ -300,7 +330,11 @@ export default class Personagem {
     if (this.tempoRecarga > 0) this.tempoRecarga -= delta;
 
     if (this.passoMelee === -1) {
-      if (this.controles.getMouseState() && this.tempoRecarga <= 0)
+      if (
+        this.controles.getMouseState() &&
+        this.tempoRecarga <= 0 &&
+        !this.defendendo
+      )
         this.iniciarAtaque(0);
       return;
     }
@@ -336,6 +370,58 @@ export default class Personagem {
         this.iniciarAtaque(this.passoMelee + 1);
       else this.resetarAtaque();
     }
+  }
+  atualizarDefesa(delta) {
+    this.defendendo = this.controles.getRightMouseState();
+
+    if (!this.defendendo) {
+      this.tempoDefesa = 0;
+      this.esconderHitboxDefesa();
+      return;
+    }
+
+    this.tempoDefesa += delta;
+    this.defesaAtiva = this.tempoDefesa >= DEFESA_ATRASO;
+    this.atualizarHitboxDefesa();
+  }
+  atualizarHitboxDefesa() {
+    const ang = this.pivot.rotation.y;
+    const sen = Math.sin(ang);
+    const cos = Math.cos(ang);
+
+    const { tamanho, distancia, altura } = DEFESA_HITBOX;
+
+    const centro = this.pivot.position.clone();
+    centro.x += sen * distancia;
+    centro.z += cos * distancia;
+    centro.y += altura;
+
+    const tam = new THREE.Vector3(
+      Math.abs(cos) * tamanho.x + Math.abs(sen) * tamanho.z,
+      tamanho.y,
+      Math.abs(sen) * tamanho.x + Math.abs(cos) * tamanho.z,
+    );
+
+    this.hitboxDefesa.setFromCenterAndSize(centro, tam);
+
+    if (this.hitboxDefesaHelper) {
+      this.hitboxDefesaHelper.visible = this.debugHitbox;
+      this.hitboxDefesaHelper.material.color.setHex(
+        this.defesaAtiva ? 0x00aaff : 0x888888,
+      );
+    }
+  }
+  esconderHitboxDefesa() {
+    this.defesaAtiva = false;
+    this.hitboxDefesa.makeEmpty();
+    if (this.hitboxDefesaHelper) this.hitboxDefesaHelper.visible = false;
+  }
+  bloquear(hitboxAtacante) {
+    if (this.morto || !this.defesaAtiva) return false;
+    if (!this.hitboxDefesa.intersectsBox(hitboxAtacante)) return false;
+
+    if (this.aoBloquear) this.aoBloquear(hitboxAtacante);
+    return true;
   }
   atualizarHitbox() {
     const centro = this.pivot.position.clone();
@@ -518,6 +604,13 @@ export default class Personagem {
 
     if (this.passoMelee !== -1) {
       this.atualizarStamina(delta, false);
+      return;
+    }
+
+    this.atualizarDefesa(delta);
+    if (this.defendendo) {
+      this.atualizarStamina(delta, false);
+      this.mudarAnimacao("Defense");
       return;
     }
 

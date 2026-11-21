@@ -57,8 +57,8 @@ class Jogo {
     this.powerups = [
       new HealthPowerUp(this.scene, new THREE.Vector3(3, 1.7, 3)),
       new HealthPowerUp(this.scene, new THREE.Vector3(-3, 1.7, 3), 50),
-      new StrengthPowerUp(this.scene, new THREE.Vector3(0, 1.5, 5)),
-      new StrengthPowerUp(this.scene, new THREE.Vector3(0, 1.5, -5), 2, 5),
+      new StrengthPowerUp(this.scene, new THREE.Vector3(0, 1.5, 5), 2),
+      new StrengthPowerUp(this.scene, new THREE.Vector3(0, 1.5, -5), 5, 5),
     ];
   }
   configurarGameOver() {
@@ -233,6 +233,12 @@ class Jogo {
     for (let i = this.projeteis.length - 1; i >= 0; i--) {
       const p = this.projeteis[i];
       p.atualizar(delta);
+
+      if (this.personagem.bloquear(p.hitbox)) {
+        p.destruir();
+        this.projeteis.splice(i, 1);
+        continue;
+      }
 
       if (p.hitbox.intersectsBox(this.personagem.hitbox)) {
         this.personagem.dano(10, p);
