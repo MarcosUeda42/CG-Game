@@ -10,31 +10,27 @@
       <h1>Título</h1>
       <button id="start-button">Jogar</button>
       <button id="history-button">Pontuações</button>
-      <div class = "instrucao-box">
+      <div class="instrucao-box">
         <h2>Objetivo</h2>
         <p>Derrotar inimigos e sobreviver!</p>
         <h3>Controles</h3>
         <p>WASD - Movimentação</p>
         <p>Shift - Correr</p>
-        <p>Mouse 1 - Atacar</p>
+        <p>Mouse Esq. - Atacar</p>
+        <p>Mouse Dir. - Defender</p>
         <p>Scroll - Zoom da câmera</p>
         <p>C - Trocar de câmera</p>
         <p>Q/E - Girar câmera</p>
         <p>Esc - Pausar</p>
       </div>
     </div>
-
     <div id="history-screen" class="hidden">
       <div class="history-content">
         <h1>Pontuações</h1>
-
         <div id="history-list"></div>
-
         <button id="history-back-button">Voltar</button>
       </div>
     </div>
-
-
     <div id="pause-menu" class="hidden">
       <div class="pause-content">
         <h2>Jogo Pausado</h2>
@@ -47,13 +43,24 @@
       <div id="game-over-spot"></div>
       <div id="game-over-content">
         <h1>You Died</h1>
-        <div class="game-over-botoes">
-          <button id="restart-death-button">Reiniciar</button>
-          <button id="gameover-quit-button">Menu principal</button>
+        <div class="game-over-bottom">
+          <h2 id="game-over-pontuacao">Pontuação final: 0</h2>
+          <div class="game-over-botoes">
+            <button id="restart-death-button">Reiniciar</button>
+            <button id="gameover-quit-button">Menu principal</button>
+          </div>
         </div>
       </div>
     </div>
     <div id="health-bar" class="hidden"><div id="health-fill"></div></div>
+    <div id="stamina-bar" class="hidden"><div id="stamina-fill"></div></div>
+    <div id="buff-forca" class="hidden">
+      <span id="buff-forca-icone">⚔</span>
+      <div id="buff-forca-info">
+        <span id="buff-forca-texto">x1.5 · 10s</span>
+        <div id="buff-forca-barra"><div id="buff-forca-fill"></div></div>
+      </div>
+    </div>
     <div id="score" class="hidden">Pontos: 0</div>
     <script type="importmap">
       {

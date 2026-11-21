@@ -8,7 +8,7 @@ import GeradorInimigo from "./gerador_inimigo.js";
 import UI from "./ui.js";
 import Pontuacao from "./pontuacao.js";
 import HistoricoPontuacao from "./historico_pontuacao.js";
-
+import { StrengthPowerUp, HealthPowerUp } from "./powerup.js";
 
 // Inicialização das classes e loop de animação
 // Personagem importado do MIXAMO Paladin W + Crouched Walking https://www.mixamo.com/#/
@@ -53,37 +53,52 @@ class Jogo {
     this.gameOver = false;
     this.pausado = false;
     this.gameOverEl = document.getElementById("game-over");
+
+    this.powerups = [
+      new HealthPowerUp(this.scene, new THREE.Vector3(3, 1.7, 3)),
+      new HealthPowerUp(this.scene, new THREE.Vector3(-3, 1.7, 3), 50),
+      new StrengthPowerUp(this.scene, new THREE.Vector3(0, 1.5, 5), 2),
+      new StrengthPowerUp(this.scene, new THREE.Vector3(0, 1.5, -5), 5, 5),
+    ];
   }
   configurarGameOver() {
-    document.getElementById("restart-death-button").addEventListener("click", () => {
-      sessionStorage.setItem("reiniciar", "1");
-      window.location.reload();
-    });
+    document
+      .getElementById("restart-death-button")
+      .addEventListener("click", () => {
+        sessionStorage.setItem("reiniciar", "1");
+        window.location.reload();
+      });
 
     document
       .getElementById("gameover-quit-button")
       .addEventListener("click", () => window.location.reload());
   }
-
   configurarRestart() {
     document.getElementById("restart-button").addEventListener("click", () => {
       sessionStorage.setItem("reiniciar", "1");
       window.location.reload();
     });
   }
-  
   mostrarGameOver() {
     this.camera.modo = 1;
     this.gameOver = true;
     this.controles.liberarMouse();
 
+    const pontosFinais = this.pontuacao.getValor();
+
     if (!this.pontuacaoRegistrada) {
-      this.historico.registrar(this.pontuacao.getValor());
+      this.historico.registrar(pontosFinais);
       this.pontuacaoRegistrada = true;
     }
 
+    document.getElementById("game-over-pontuacao").textContent =
+      `Pontuação final: ${pontosFinais}`;
+
     this.gameOverEl.classList.add("visivel");
+    document.getElementById("stamina-bar").classList.add("hidden");
     document.getElementById("health-bar").classList.add("hidden");
+    document.getElementById("buff-forca").classList.add("hidden");
+    document.getElementById("score").classList.add("hidden");
     this.removerInimigos();
   }
 
@@ -97,7 +112,6 @@ class Jogo {
     this.gameOverEl.style.setProperty("--x", `${x}%`);
     this.gameOverEl.style.setProperty("--y", `${y}%`);
   }
-
   iniciar() {
     this.cenario.renderizar();
     this.personagem.carregar();
@@ -107,7 +121,6 @@ class Jogo {
     this.configurarRestart();
     this.controles.capturarMouse();
   }
-
   configurarPausa() {
     const pauseMenu = document.getElementById("pause-menu");
     const resumeButton = document.getElementById("resume-button");
@@ -128,8 +141,7 @@ class Jogo {
     };
 
     document.addEventListener("pointerlockchange", () => {
-      const mouseCapturado =
-        document.pointerLockElement === canvas;
+      const mouseCapturado = document.pointerLockElement === canvas;
 
       if (!mouseCapturado) {
         if (!this.gameOver) {
@@ -176,15 +188,12 @@ class Jogo {
     const movimentoMouse = this.controles.consumirMovimentoMouse();
 
     if (!this.gameOver) {
-      this.camera.moverComMouse(
-        movimentoMouse.x,
-        movimentoMouse.y,
-      );
+      this.camera.moverComMouse(movimentoMouse.x, movimentoMouse.y);
     }
 
-    if (this.controles.teclas["KeyQ"] && !this.gameOver) 
+    if (this.controles.teclas["KeyQ"] && !this.gameOver)
       this.camera.orbitarDireita(this.personagem.getPosition());
-    else if (this.controles.teclas["KeyE"] && !this.gameOver) 
+    else if (this.controles.teclas["KeyE"] && !this.gameOver)
       this.camera.orbitarEsquerda(this.personagem.getPosition());
     const deltaRoda = this.controles.consumirDeltaRoda();
 
@@ -211,9 +220,24 @@ class Jogo {
     for (const inimigo of this.geradorInimigo.inimigos)
       this.personagem.verificarAcerto(inimigo, this.scene);
 
+    for (let i = this.powerups.length - 1; i >= 0; i--) {
+      const p = this.powerups[i];
+      p.atualizar(delta);
+
+      if (p.verificarColeta(this.personagem)) {
+        this.powerups.splice(i, 1);
+      }
+    }
+
     for (let i = this.projeteis.length - 1; i >= 0; i--) {
       const p = this.projeteis[i];
       p.atualizar(delta);
+
+      if (this.personagem.bloquear(p.hitbox)) {
+        p.destruir();
+        this.projeteis.splice(i, 1);
+        continue;
+      }
 
       if (p.hitbox.intersectsBox(this.personagem.hitbox)) {
         this.personagem.dano(10, p);
@@ -228,6 +252,8 @@ class Jogo {
     this.renderer.draw(this.scene, this.camera.camera);
     if (this.gameOver) this.atualizarSpotGameOver();
     this.ui.updatePlayerHealth();
+    this.ui.updatePlayerStamina();
+    this.ui.updateBuffForca();
   };
 
   removerInimigos() {
@@ -243,13 +269,13 @@ window.addEventListener("DOMContentLoaded", () => {
   const titleScreen = document.getElementById("title-screen");
   const healthBar = document.getElementById("health-bar");
   const score = document.getElementById("score");
-
+  const staminaBar = document.getElementById("stamina-bar");
   const historyButton = document.getElementById("history-button");
   const historyScreen = document.getElementById("history-screen");
   const historyList = document.getElementById("history-list");
   const historyBackButton = document.getElementById("history-back-button");
   const historico = new HistoricoPontuacao();
-  
+
   const renderizarHistorico = () => {
     const registros = historico.getRegistros().reverse();
 
@@ -277,6 +303,7 @@ window.addEventListener("DOMContentLoaded", () => {
   const iniciarJogo = () => {
     titleScreen.classList.add("hidden");
     healthBar.classList.remove("hidden");
+    staminaBar.classList.remove("hidden");
     score.classList.remove("hidden");
 
     new Jogo(historico).iniciar();

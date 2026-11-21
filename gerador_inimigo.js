@@ -11,7 +11,6 @@ export default class GeradorInimigo {
     this.limite = 5;
     this.ativo = true;
   }
-
   atualizar(delta, posJogador, listaProjeteis) {
     if (!this.ativo) return;
 
@@ -26,7 +25,8 @@ export default class GeradorInimigo {
       this.tempoUltimoInimigo = 0;
     }
 
-    for (let i = 0; i < this.inimigos.length; i++) {
+    // recomendação do cláudio fazer de trás para frente
+    for (let i = this.inimigos.length - 1; i >= 0; i--) {
       const inimigo = this.inimigos[i];
 
       if (inimigo.removido) {
@@ -36,7 +36,6 @@ export default class GeradorInimigo {
       inimigo.atualizar(posJogador, delta, listaProjeteis);
     }
   }
-
   removerTodos() {
     this.ativo = false;
 
@@ -62,7 +61,6 @@ export default class GeradorInimigo {
 
     this.inimigos.length = 0;
   }
-
   gerarInimigo() {
     const x = Math.random() * 50 - 25;
     const z = Math.random() * 50 - 25;
@@ -71,14 +69,21 @@ export default class GeradorInimigo {
       "./inimigo/model.glb",
       this.scene,
       x,
-      1.2,
+      0.85,
       z,
       0,
       100,
-      this.aoInimigoMorrer
+      this.aoInimigoMorrer,
     );
 
     novoInimigo.carregar();
     this.inimigos.push(novoInimigo);
+  }
+  removerTodos() {
+    this.ativo = false;
+
+    for (const inimigo of this.inimigos) inimigo.remover();
+
+    this.inimigos.length = 0;
   }
 }

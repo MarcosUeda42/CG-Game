@@ -15,7 +15,7 @@ body {
   transform: translateX(-50%);
   width: 300px;
   height: 24px;
-  background: #333;
+  background: #33333375;
   border: 2px solid #fff;
   border-radius: 12px;
   overflow: hidden;
@@ -68,18 +68,18 @@ body {
   top: 24px;
   right: 32px;
   text-align: left;
-  max-width: 300px;  
+  max-width: 300px;
 }
 
 .instrucao-box h2 {
   font-size: 2.5rem;
-  margin: 0 0 8px 0; 
+  margin: 0 0 8px 0;
 }
 
 .instrucao-box p {
   font-size: 1.1rem;
   margin: 0;
-  color: #ccc; 
+  color: #ccc;
 }
 
 #start-button {
@@ -126,7 +126,8 @@ body {
   margin-bottom: 20px;
 }
 
-#resume-button,#restart-button,
+#resume-button,
+#restart-button,
 #quit-button {
   width: 220px;
   padding: 12px 0;
@@ -142,12 +143,14 @@ body {
   text-align: center;
 }
 
-#resume-button,#restart-button,
+#resume-button,
+#restart-button,
 #quit-button {
   background-color: #4c87af;
   color: white;
 }
-#resume-button:hover, #restart-button:hover,
+#resume-button:hover,
+#restart-button:hover,
 #quit-button:hover {
   background-color: #4562a0;
   transform: scale(1.05);
@@ -205,15 +208,31 @@ body {
   transition: opacity 2s ease 2.5s;
 }
 
+#game-over-pontuacao {
+  font-family: Arial, Helvetica, sans-serif;
+  color: white;
+  text-shadow:
+    0 0 20px #000,
+    0 0 40px #600;
+}
+
 .game-over-botoes {
   display: flex;
+  gap: 1rem;
+  justify-content: center;
+}
+
+.game-over-bottom {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   gap: 1rem;
   opacity: 0;
   transition: opacity 1.5s ease 3.5s;
 }
 
 #game-over.visivel h1,
-#game-over.visivel .game-over-botoes {
+#game-over.visivel .game-over-bottom {
   opacity: 1;
 }
 
@@ -299,4 +318,94 @@ body {
 
 #history-back-button:hover {
   background: #4562a0;
+}
+
+#stamina-bar {
+  position: fixed;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 300px;
+  height: 24px;
+  background: #33333348;
+  border: 2px solid #fff;
+  border-radius: 12px;
+  overflow: hidden;
+  z-index: 10;
+  pointer-events: none;
+}
+
+#stamina-fill {
+  width: 100%;
+  height: 100%;
+  background: #2ebdf5;
+  transition:
+    width 0.1s linear,
+    background 0.2s ease;
+}
+
+#stamina-bar.exhausted #stamina-fill {
+  background: #c0392b;
+}
+
+#buff-forca {
+  position: fixed;
+  bottom: 56px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 12px;
+  background: rgba(0, 0, 0, 0.6);
+  border: 2px solid #f57c00;
+  border-radius: 12px;
+  color: white;
+  font-family: OptimusPrinceps, Arial, sans-serif;
+  z-index: 10;
+  pointer-events: none;
+}
+
+#buff-forca-icone {
+  font-size: 1.6rem;
+  color: #ff9800;
+}
+
+#buff-forca-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 140px;
+}
+
+#buff-forca-texto {
+  font-size: 0.95rem;
+  text-shadow: 0 0 4px black;
+}
+
+#buff-forca-barra {
+  width: 100%;
+  height: 8px;
+  background: #333;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+#buff-forca-fill {
+  width: 100%;
+  height: 100%;
+  background: #ff9800;
+}
+
+#buff-forca.acabando {
+  animation: buff-piscar 0.5s ease-in-out infinite alternate;
+}
+
+@keyframes buff-piscar {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0.45;
+  }
 }
