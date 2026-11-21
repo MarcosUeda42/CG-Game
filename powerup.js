@@ -1,5 +1,26 @@
 import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+import { POWERUP_CONFIG } from "./config.js";
+
+const loaderPowerUp = new GLTFLoader();
+const cacheModelosPowerUp = new Map();
+
+function carregarModeloPowerUp(caminho) {
+  if (!cacheModelosPowerUp.has(caminho)) {
+    const promessa = new Promise((resolve, reject) => {
+      loaderPowerUp.load(
+        caminho,
+        (gltf) => resolve(gltf.scene),
+        undefined,
+        reject,
+      );
+    });
+
+    cacheModelosPowerUp.set(caminho, promessa);
+  }
+
+  return cacheModelosPowerUp.get(caminho);
+}
 
 class PowerUp {
   constructor(
@@ -26,16 +47,23 @@ class PowerUp {
     this.pivot.position.copy(posicao);
     this.scene.add(this.pivot);
 
-    new GLTFLoader().load(caminhoModelo, (gltf) => {
-      this.modelo = gltf.scene;
+    carregarModeloPowerUp(caminhoModelo)
+      .then((modeloBase) => {
+        if (this.coletado) return;
 
-      const caixa = new THREE.Box3().setFromObject(this.modelo);
-      const centro = caixa.getCenter(new THREE.Vector3());
-      this.modelo.scale.setScalar(scalar);
-      this.modelo.position.sub(centro);
+        this.modelo = modeloBase.clone(true);
 
-      this.pivot.add(this.modelo);
-    });
+        const caixa = new THREE.Box3().setFromObject(this.modelo);
+        const centro = caixa.getCenter(new THREE.Vector3());
+
+        this.modelo.scale.setScalar(scalar);
+        this.modelo.position.sub(centro);
+
+        this.pivot.add(this.modelo);
+      })
+      .catch((erro) => {
+        console.error("Erro ao carregar power-up:", erro);
+      });
   }
   aplicarEfeito(personagem) {}
   atualizar(delta) {
@@ -68,7 +96,12 @@ class PowerUp {
 }
 
 export class HealthPowerUp extends PowerUp {
-  constructor(scene, posicao, cura = 30, aoColetar = null) {
+  constructor(
+    scene,
+    posicao,
+    cura = POWERUP_CONFIG.health.cura,
+    aoColetar = null,
+  ) {
     super(scene, 0.25, posicao, "./objetos/red_potion.glb", aoColetar);
     this.cura = cura;
   }
@@ -82,8 +115,8 @@ export class StrengthPowerUp extends PowerUp {
   constructor(
     scene,
     posicao,
-    multiplicador = 1.5,
-    duracao = 10,
+    multiplicador = POWERUP_CONFIG.strength.multiplicador,
+    duracao = POWERUP_CONFIG.strength.duracao,
     aoColetar = null,
   ) {
     super(scene, 0.25, posicao, "./objetos/mana_potion.glb", aoColetar);

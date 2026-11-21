@@ -1,11 +1,9 @@
-const maxHealth = 100;
-
 export default class UI {
   constructor(personagem) {
     this.personagem = personagem;
     this.healthFill = document.getElementById("health-fill");
     this.scoreElement = document.getElementById("score");
-    this.mainHealth = maxHealth;
+    this.mainHealth = this.personagem.getHealthMax();
     this.staminaFill = document.getElementById("stamina-fill");
     this.staminaBar = document.getElementById("stamina-bar");
     this.buffForca = document.getElementById("buff-forca");
@@ -40,8 +38,13 @@ export default class UI {
   }
   updatePlayerHealth() {
     const value = this.personagem.getHealth();
+    const maxHealth = this.personagem.getHealthMax();
+
     this.mainHealth = Math.max(0, Math.min(maxHealth, value));
-    const pct = (this.mainHealth / maxHealth) * 100;
+    const pct =
+      maxHealth > 0
+        ? (this.mainHealth / maxHealth) * 100
+        : 0;
 
     if (!this.healthFill) return;
 
