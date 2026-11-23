@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { OBB } from "three/addons/math/OBB.js";
-import { PLAYER_CONFIG } from "./config.js";
+import { PLAYER_CONFIG, POWERUP_CONFIG } from "./config.js";
 
 export default class Personagem {
   constructor(
@@ -235,7 +235,15 @@ export default class Personagem {
     return true;
   }
   aplicarBuffForca(multiplicador, duracao) {
-    this.multiplicadorDano = multiplicador;
+    if (this.tempoBuffForca > 0 && this.multiplicadorDano > 1) {
+      this.multiplicadorDano = Math.min(
+        this.multiplicadorDano + multiplicador,
+        POWERUP_CONFIG.strength.multiplicadorMaximo,
+      );
+    } else {
+      this.multiplicadorDano = multiplicador;
+    }
+
     this.tempoBuffForca = duracao;
     this.duracaoBuffForca = duracao;
   }
