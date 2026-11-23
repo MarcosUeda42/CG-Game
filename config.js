@@ -95,7 +95,7 @@ export const ENEMY_CONFIG = {
 
   movimento: {
     velocidade: 2.5,
-    distanciaMinima: 2,
+    distanciaMinima: 5,
     velocidadeGiro: 8,
     velocidadeGiroAtaque: 6,
   },

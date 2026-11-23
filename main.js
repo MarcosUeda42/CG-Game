@@ -406,6 +406,17 @@ class Jogo {
       const p = this.projeteis[i];
       p.atualizar(delta);
 
+      let atingiuObstaculo = false;
+      for (const obstaculo of this.cenario.hitboxesParedes) {
+        if (p.hitbox.intersectsBox(obstaculo)) {
+          p.destruir();
+          this.projeteis.splice(i, 1);
+          atingiuObstaculo = true;
+          break;
+        }
+      }
+      if (atingiuObstaculo) continue;
+
       if (this.personagem.bloquear(p.hitbox)) {
         p.destruir();
         this.projeteis.splice(i, 1);
