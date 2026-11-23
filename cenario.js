@@ -57,10 +57,10 @@ export default class Cenario {
       const montanha = gltf.scene;
 
       // modelo, x, y, z, escala, rotação Y
-      this.adicionarModelo(montanha, 0, 0, -45, 100);
-      this.adicionarModelo(montanha, -30, -10, 0, 200);
-      this.adicionarModelo(montanha, 0, -5, 50, 150);
-      this.adicionarModelo(montanha, 50, -2, -5, 150, -Math.PI);
+      this.adicionarModelo(montanha, -150, 0, -45, 300);
+      this.adicionarModelo(montanha, -130, -10, 0, 300);
+      this.adicionarModelo(montanha, 150, -5, 50, 350);
+      this.adicionarModelo(montanha, 150, -2, -5, 350, -Math.PI);
 
       for (let i = 0; i < 50; i++) {
         const x = Math.random() * 50 - 25;
@@ -104,19 +104,41 @@ export default class Cenario {
         obj.material.needsUpdate = true;
       });
 
-      //modelo, x, y, z, escala
-      this.adicionarModelo(arvore, -10, 2, -10, 3);
-      this.adicionarModelo(arvore, -8, 1, -13, 1);
-      this.adicionarModelo(arvore, -15, 2, -10, 2);
-      this.adicionarModelo(arvore, 10, 2, -20, 3);
-      this.adicionarModelo(arvore, 15, 2, -10, 3);
-      this.adicionarModelo(arvore, 15, 2, -15, 2);
-      this.adicionarModelo(arvore, -5, 0, -2, 1);
-      this.adicionarModelo(arvore, -5, 0, -2, 1);
-      this.adicionarModelo(arvore, 9, 0, 5, 1);
-      this.adicionarModelo(arvore, 10, 0, 10, 2);
-      this.adicionarModelo(arvore, -10, 2, 10, 3);
-      this.adicionarModelo(arvore, -14, 2, 5, 2.5);
+      // Lista de árvores: [x, y, z, escala]
+      const arvoresConfig = [
+        [-20, 2, -18, 3],
+        [-20, 2, -6, 2],
+        [-20, 2, 6, 3],
+        [-20, 2, 18, 2],
+        [20, 2, -18, 3],
+        [20, 2, -6, 2],
+        [20, 2, 6, 3],
+        [20, 2, 18, 2],
+        [-13, 0, -20, 1],
+        [0, 0, -20, 2],
+        [13, 0, -20, 2],
+        [-13, 0, 20, 2.5],
+        [0, 0, 20, 2],
+        [13, 0, 20, 1],
+        [8, 4, 8, 5],
+        [-10, 4, -5, 5],
+      ];
+
+      arvoresConfig.forEach(([x, y, z, escala]) => {
+        this.adicionarModelo(arvore, x, y, z, escala);
+
+        const raioTronco = 0.14 * escala;
+        const alturaTronco = 3;
+        const hitbox = new THREE.Box3(
+          new THREE.Vector3(x - raioTronco, 0, z - raioTronco),
+          new THREE.Vector3(x + raioTronco, alturaTronco, z + raioTronco)
+        );
+
+        this.hitboxesParedes.push(hitbox);
+
+        const helper = new THREE.Box3Helper(hitbox, 0x00ff00);
+        this.scene.add(helper);
+      });
     });
   }
 
@@ -136,11 +158,11 @@ export default class Cenario {
     loader.load("./objetos/torch.glb", (gltf) => {
       const tocha = gltf.scene;
 
-      this.adicionarTocha(tocha, -18, 0, 3, 0.75);
-      this.adicionarTocha(tocha, -3, 0, -8, 0.75);
-      this.adicionarTocha(tocha, -7, 0, 9, 0.75);
-      this.adicionarTocha(tocha, 6, 0, -6, 0.75);
-      this.adicionarTocha(tocha, 4, 0, 8, 0.75);
+      this.adicionarTocha(tocha, -13, 0, -9, 0.75);
+      this.adicionarTocha(tocha, 9, 0, -14, 0.75);
+      this.adicionarTocha(tocha, -7, 0, 13, 0.75);
+      this.adicionarTocha(tocha, 14, 0, 5, 0.75);
+      this.adicionarTocha(tocha, 2, 0, -1, 0.75);
     });
   }
 
@@ -219,8 +241,8 @@ export default class Cenario {
       const ameia = new THREE.Mesh(geometriaAmeia, materialAmeia);
 
       const ameiaOposta = ameia.clone();
-      ameia.position.set(x, 0.29, 0.07);
-      ameiaOposta.position.set(x, 0.29, -0.07);
+      ameia.position.set(x, 0.28, 0.07);
+      ameiaOposta.position.set(x, 0.28, -0.07);
       parede.add(ameia);
       parede.add(ameiaOposta);
     }
