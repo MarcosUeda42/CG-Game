@@ -3,9 +3,6 @@ import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { OBB } from "three/addons/math/OBB.js";
 import { PLAYER_CONFIG } from "./config.js";
 
-const DURACAO_DANO_FALLBACK = 0.5; // segundos, usado se não existir a animação "Damage"
-const DURACAO_TRANSICAO_ATAQUE = 0.05; // duração da pré-animação de ataque
-
 export default class Personagem {
   constructor(
     url,
@@ -62,56 +59,23 @@ export default class Personagem {
     this.rotacaoDefesa = new THREE.Matrix3();
     this.hitboxDefesaHelper = null;
 
-    this.meleeStates = [
-      {
-        //Ataque 1
-        inicio: 0.0,
-        fim: 1.3,
-        hitInicio: 0.9,
-        hitFim: 1.1,
-        dano: 40,
-        velocidade: 1,
-        hitbox: {
-          tamanho: new THREE.Vector3(1.4, 1.6, 1.6),
-          distancia: 1.4,
-          altura: 0.9,
-          lateral: 0,
-        },
+    this.meleeStates = PLAYER_CONFIG.ataque.golpes.map((golpe) => ({
+      inicio: golpe.inicio,
+      fim: golpe.fim,
+      hitInicio: golpe.hitInicio,
+      hitFim: golpe.hitFim,
+      dano: golpe.dano,
+      velocidade: golpe.velocidade,
+      hitbox: {
+        tamanho: new THREE.Vector3(...golpe.hitbox.tamanho),
+        distancia: golpe.hitbox.distancia,
+        altura: golpe.hitbox.altura,
+        lateral: golpe.hitbox.lateral,
       },
-      {
-        //Ataque 2
-        inicio: 1.3,
-        fim: 2.3,
-        hitInicio: 0.7,
-        hitFim: 1,
-        dano: 40,
-        velocidade: 1.5,
-        hitbox: {
-          tamanho: new THREE.Vector3(2.0, 1.6, 1.6),
-          distancia: 1.4,
-          altura: 0.9,
-          lateral: 0,
-        },
-      },
-      {
-        //Ataque 3
-        inicio: 2.5,
-        fim: 3.5,
-        hitInicio: 0.5,
-        hitFim: 0.7,
-        dano: 60,
-        velocidade: 0.7,
-        hitbox: {
-          tamanho: new THREE.Vector3(1.6, 1.8, 2.0),
-          distancia: 1.6,
-          altura: 0.9,
-          lateral: 0,
-        },
-      },
-    ];
+    }));
     this.tempoRecarga = 0;
     this.passoMelee = -1;
-    this.velocidadeGiro = 10;
+    this.velocidadeGiro = PLAYER_CONFIG.movimento.velocidadeGiro;
 
     this.hitbox = new THREE.Box3();
     this.hitboxHelper = null;
@@ -136,6 +100,19 @@ export default class Personagem {
       KeyD: new THREE.Vector3(1, 0, 0),
     };
     this.proximoSolicitado = false;
+
+    this._tmpPosicaoAnterior = new THREE.Vector3();
+    this._tmpFrenteCamera = new THREE.Vector3();
+    this._tmpDireitaCamera = new THREE.Vector3();
+    this._tmpDirecaoMovimento = new THREE.Vector3();
+    this._tmpCentroDefesa = new THREE.Vector3();
+    this._tmpTamanhoDefesa = new THREE.Vector3();
+    this._tmpUp = new THREE.Vector3(0, 1, 0);
+    this._tmpCentroHitbox = new THREE.Vector3();
+    this._tmpMetadeHitbox = new THREE.Vector3();
+    this._tmpCentroAtaque = new THREE.Vector3();
+    this._tmpTamanhoAtaque = new THREE.Vector3();
+    this._tmpPosicaoDanoAnterior = new THREE.Vector3();
 
     this.correndo = false;
     this.fatorCorrida = 1;
@@ -251,7 +228,7 @@ export default class Personagem {
 
     if (this.actions["Damage"]) this.mudarAnimacao("Damage");
     else {
-      this.tempoDano = DURACAO_DANO_FALLBACK;
+      this.tempoDano = PLAYER_CONFIG.ataque.duracaoDanoFallback;
       this.mudarAnimacao("Idle"); // evita continuar tocando o ataque durante o stun
     }
 
@@ -300,7 +277,7 @@ export default class Personagem {
     this.mudarAnimacao("Idle");
   }
   atualizarDano(delta) {
-    const anterior = this.pivot.position.clone();
+    const anterior = this._tmpPosicaoDanoAnterior.copy(this.pivot.position);
 
     this.pivot.position.addScaledVector(this.knockbackVel, delta);
     this.knockbackVel.multiplyScalar(Math.exp(-this.atritoKnockback * delta));
@@ -377,8 +354,7 @@ export default class Personagem {
     }
 
     this.tempoDefesa += delta;
-    this.defesaAtiva =
-      this.tempoDefesa >= PLAYER_CONFIG.defesa.atraso;
+    this.defesaAtiva = this.tempoDefesa >= PLAYER_CONFIG.defesa.atraso;
     this.atualizarHitboxDefesa();
   }
   atualizarHitboxDefesa() {
@@ -386,13 +362,13 @@ export default class Personagem {
     const sen = Math.sin(ang);
     const cos = Math.cos(ang);
 
-    const tamanho = new THREE.Vector3(
+    const tamanho = this._tmpTamanhoDefesa.set(
       PLAYER_CONFIG.defesa.hitbox.largura,
       PLAYER_CONFIG.defesa.hitbox.altura,
       PLAYER_CONFIG.defesa.hitbox.profundidade,
     );
 
-    const centro = this.pivot.position.clone();
+    const centro = this._tmpCentroDefesa.copy(this.pivot.position);
     centro.x += sen * PLAYER_CONFIG.defesa.hitbox.distancia;
     centro.z += cos * PLAYER_CONFIG.defesa.hitbox.distancia;
     centro.y += PLAYER_CONFIG.defesa.hitbox.alturaCentro;
@@ -442,10 +418,13 @@ export default class Personagem {
     return true;
   }
   atualizarHitbox() {
-    const centro = this.pivot.position.clone();
-    centro.add(this.offsetHitbox);
+    const centro = this._tmpCentroHitbox
+      .copy(this.pivot.position)
+      .add(this.offsetHitbox);
 
-    const metade = this.tamanhoHitbox.clone().multiplyScalar(0.5);
+    const metade = this._tmpMetadeHitbox
+      .copy(this.tamanhoHitbox)
+      .multiplyScalar(0.5);
 
     this.hitbox.min.copy(centro).sub(metade);
     this.hitbox.max.copy(centro).add(metade);
@@ -475,13 +454,13 @@ export default class Personagem {
     const altura = cfg.altura ?? this.alturaAtaque;
     const lateral = cfg.lateral ?? 0;
 
-    const centro = this.pivot.position.clone();
+    const centro = this._tmpCentroAtaque.copy(this.pivot.position);
     centro.x += sen * distancia + cos * lateral;
     centro.z += cos * distancia - sen * lateral;
     centro.y += altura;
 
     const { x: larg, y: alt, z: prof } = tamanhoAtaque;
-    const tamanho = new THREE.Vector3(
+    const tamanho = this._tmpTamanhoAtaque.set(
       Math.abs(cos) * larg + Math.abs(sen) * prof,
       alt,
       Math.abs(sen) * larg + Math.abs(cos) * prof,
@@ -537,7 +516,11 @@ export default class Personagem {
       acao.enabled = true;
       acao.play();
       if (this.currentAction)
-        this.currentAction.crossFadeTo(acao, DURACAO_TRANSICAO_ATAQUE, true);
+        this.currentAction.crossFadeTo(
+          acao,
+          PLAYER_CONFIG.ataque.duracaoTransicaoAtaque,
+          true,
+        );
       this.currentAction = acao;
     }
   }
@@ -547,7 +530,7 @@ export default class Personagem {
     this.tempoAtaque = 0;
     this.proximoSolicitado = false;
     this.acertou = false;
-    this.tempoRecarga = 0.2; // pequena pausa antes de reiniciar
+    this.tempoRecarga = PLAYER_CONFIG.ataque.cooldownCombo;
   }
   acompanharQuadril(aplicar) {
     const q = this.quadril;
@@ -600,7 +583,7 @@ export default class Personagem {
       this.controles.getKeyStatus("ShiftRight");
     this.correndo = false;
 
-    const posicaoAnterior = new THREE.Vector3(
+    const posicaoAnterior = this._tmpPosicaoAnterior.set(
       this.pivot.position.x * 0.999,
       this.pivot.position.y,
       this.pivot.position.z * 0.999,
@@ -617,6 +600,19 @@ export default class Personagem {
       return;
     }
 
+    this.atualizarDefesa(delta);
+
+    if (this.defendendo) {
+      if (this.passoMelee !== -1) {
+        this.resetarAtaque();
+        this.atualizarHitboxAtaque();
+      }
+
+      this.atualizarStamina(delta, false);
+      this.mudarAnimacao("Defense");
+      return;
+    }
+
     this.ataque(delta);
     this.atualizarHitboxAtaque();
 
@@ -625,24 +621,15 @@ export default class Personagem {
       return;
     }
 
-    this.atualizarDefesa(delta);
-    if (this.defendendo) {
-      this.atualizarStamina(delta, false);
-      this.mudarAnimacao("Defense");
-      return;
-    }
-
-    const frenteCamera = new THREE.Vector3();
+    const frenteCamera = this._tmpFrenteCamera;
     camera.camera.getWorldDirection(frenteCamera);
     frenteCamera.y = 0;
     frenteCamera.normalize();
 
-    const direitaCamera = new THREE.Vector3();
-    direitaCamera
-      .crossVectors(frenteCamera, new THREE.Vector3(0, 1, 0))
-      .normalize();
+    const direitaCamera = this._tmpDireitaCamera;
+    direitaCamera.crossVectors(frenteCamera, this._tmpUp).normalize();
 
-    const direcao = new THREE.Vector3();
+    const direcao = this._tmpDirecaoMovimento.set(0, 0, 0);
     if (this.controles.teclas["KeyW"]) direcao.add(frenteCamera);
     if (this.controles.teclas["KeyS"]) direcao.sub(frenteCamera);
     if (this.controles.teclas["KeyD"]) direcao.add(direitaCamera);
@@ -758,11 +745,7 @@ export default class Personagem {
     this.stamina = Math.min(this.staminaMax, this.stamina + valor);
 
     if (this.aoMudarStamina) {
-      this.aoMudarStamina(
-        this.stamina,
-        this.staminaMax,
-        this.exausto,
-      );
+      this.aoMudarStamina(this.stamina, this.staminaMax, this.exausto);
     }
   }
   isExhausted() {

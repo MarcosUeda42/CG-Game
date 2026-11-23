@@ -38,6 +38,7 @@ export default class Projetil {
       PROJECTILE_CONFIG.hitbox,
       PROJECTILE_CONFIG.hitbox,
     );
+    this._tmpMetadeHitbox = new THREE.Vector3();
     this.atualizarHitbox();
   }
 
@@ -56,7 +57,9 @@ export default class Projetil {
 
   atualizarHitbox() {
     const centro = this.mesh.position;
-    const metade = this.tamanhoHitbox.clone().multiplyScalar(0.5);
+    const metade = this._tmpMetadeHitbox
+      .copy(this.tamanhoHitbox)
+      .multiplyScalar(0.5);
     this.hitbox.min.copy(centro).sub(metade);
     this.hitbox.max.copy(centro).add(metade);
   }

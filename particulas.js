@@ -18,6 +18,7 @@ export default class Particulas {
     this.scene = scene;
     this.max = max;
     this.cor = new THREE.Color(cor);
+    this._tmpDirecao = new THREE.Vector3();
     this.proximo = 0;
     this.ativos = 0;
 
@@ -70,11 +71,8 @@ export default class Particulas {
 
   explosao(centro, quantidade = 25, velocidade = 2.5, vida = 0.5) {
     for (let n = 0; n < quantidade; n++) {
-      const d = new THREE.Vector3(
-        Math.random() - 0.5,
-        Math.random() - 0.5,
-        Math.random() - 0.5,
-      )
+      const d = this._tmpDirecao
+        .set(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5)
         .normalize()
         .multiplyScalar(velocidade * (0.4 + Math.random() * 0.6));
 
@@ -84,11 +82,9 @@ export default class Particulas {
 
   convergir(centro, quantidade = 2, raio = 0.5, vida = 0.25) {
     for (let n = 0; n < quantidade; n++) {
-      const d = new THREE.Vector3(
-        Math.random() - 0.5,
-        Math.random() - 0.5,
-        Math.random() - 0.5,
-      ).normalize();
+      const d = this._tmpDirecao
+        .set(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5)
+        .normalize();
 
       const v = (raio / vida) * -1;
       this._spawn(

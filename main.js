@@ -52,7 +52,70 @@ class Jogo {
 
         this.tentarDroparPowerUp(inimigo);
       },
+      (hitboxAtaque, origem, dano) => {
+        if (this.personagem.bloquear(hitboxAtaque)) {
+          return true;
+        }
+
+        if (!hitboxAtaque.intersectsBox(this.personagem.hitbox)) {
+          return false;
+        }
+
+        this.personagem.dano(dano, origem);
+
+        return true;
+      },
+      (roundAtual, roundFinal) => {
+        this.mostrarAvisoRound(roundAtual, roundFinal);
+      },
     );
+
+    this.tempoDebugEstado = 0;
+    this.debugEstadoJogo = document.createElement("div");
+    Object.assign(this.debugEstadoJogo.style, {
+      position: "fixed",
+      left: "15px",
+      bottom: "15px",
+      zIndex: "1000",
+      padding: "10px 14px",
+      background: "rgba(0, 0, 0, 0.65)",
+      color: "white",
+      fontFamily: "monospace",
+      fontSize: "14px",
+      lineHeight: "1.5",
+      border: "1px solid rgba(255, 255, 255, 0.4)",
+      borderRadius: "4px",
+      pointerEvents: "none",
+      userSelect: "none",
+    });
+    document.body.appendChild(this.debugEstadoJogo);
+
+    this.avisoRound = document.createElement("div");
+    Object.assign(this.avisoRound.style, {
+      position: "fixed",
+      left: "50%",
+      top: "18%",
+      transform: "translateX(-50%)",
+      zIndex: "1000",
+      pointerEvents: "none",
+      userSelect: "none",
+      display: "none",
+      opacity: "0",
+      transition: "opacity 0.5s ease",
+      color: "#ffd700",
+      fontFamily: "OptimusPrinceps",
+      fontSize: "clamp(2rem, 5vw, 4rem)",
+      letterSpacing: "0.12em",
+      textAlign: "center",
+      textShadow: "0 0 20px #000, 0 0 40px #600",
+    });
+    document.body.appendChild(this.avisoRound);
+    this.avisoRoundTimer = null;
+    this.avisoRoundFimTimer = null;
+
+    this.mostrarAvisoRound(1, this.geradorInimigo.getRoundFinal());
+    this.atualizarDebugEstadoJogo();
+
     this.clock = new THREE.Clock();
     this.projeteis = [];
 
@@ -74,12 +137,75 @@ class Jogo {
       ),
     ];
   }
+  formatarTempo(segundos) {
+    const minutos = Math.floor(segundos / 60);
+    const segundosRestantes = Math.floor(segundos % 60);
+
+    return (
+      String(minutos).padStart(2, "0") +
+      ":" +
+      String(segundosRestantes).padStart(2, "0")
+    );
+  }
+  mostrarAvisoRound(round, roundFinal) {
+    if (!this.avisoRound) return;
+
+    if (this.avisoRoundTimer) {
+      clearTimeout(this.avisoRoundTimer);
+    }
+    if (this.avisoRoundFimTimer) {
+      clearTimeout(this.avisoRoundFimTimer);
+    }
+
+    this.avisoRound.textContent =
+      round >= roundFinal ? "FINAL ROUND" : `Round ${round}`;
+
+    this.avisoRound.style.display = "block";
+    this.avisoRound.style.opacity = "1";
+
+    this.avisoRoundTimer = setTimeout(() => {
+      this.avisoRound.style.opacity = "0";
+      this.avisoRoundFimTimer = setTimeout(() => {
+        this.avisoRound.style.display = "none";
+      }, 500);
+    }, 1500);
+  }
+  atualizarDebugEstadoJogo() {
+    if (!this.debugEstadoJogo || !this.geradorInimigo) {
+      return;
+    }
+
+    const round = this.geradorInimigo.getRoundAtual();
+
+    const roundFinal = this.geradorInimigo.getRoundFinal();
+
+    const limite = this.geradorInimigo.getLimiteTotalAtual();
+
+    const magos = this.geradorInimigo.getQuantidadeMagos();
+
+    const tanks = this.geradorInimigo.getQuantidadeTanks();
+
+    const tempoJogo = this.geradorInimigo.getTempoJogo();
+
+    const tempoRound = this.geradorInimigo.getTempoRoundAtual();
+
+    const textoRound = round >= roundFinal ? "FINAL" : round;
+
+    this.debugEstadoJogo.innerHTML =
+      `Round: ${textoRound}<br>` +
+      `Tempo de Jogo: ${this.formatarTempo(tempoJogo)}<br>` +
+      `Tempo do Round: ${this.formatarTempo(tempoRound)}<br>` +
+      `Total Inimigos: ${limite}<br>` +
+      `Qtd de Magos: ${magos}<br>` +
+      `Qtd de Orcs: ${tanks}`;
+  }
   tentarDroparPowerUp(inimigo) {
-    if (!inimigo || Math.random() >= POWERUP_CONFIG.chanceDrop) return;
+    if (!inimigo) return;
 
     const posicao = inimigo.getPosition();
+    const roll = Math.random();
 
-    if (Math.random() < POWERUP_CONFIG.chanceHealth) {
+    if (roll < POWERUP_CONFIG.chanceHealth) {
       posicao.y = 1.7;
 
       this.powerups.push(
@@ -89,16 +215,18 @@ class Jogo {
       return;
     }
 
-    posicao.y = 1.5;
+    if (roll < POWERUP_CONFIG.chanceHealth + POWERUP_CONFIG.chanceStrength) {
+      posicao.y = 1.5;
 
-    this.powerups.push(
-      new StrengthPowerUp(
-        this.scene,
-        posicao,
-        POWERUP_CONFIG.strength.multiplicador,
-        POWERUP_CONFIG.strength.duracao,
-      ),
-    );
+      this.powerups.push(
+        new StrengthPowerUp(
+          this.scene,
+          posicao,
+          POWERUP_CONFIG.strength.multiplicador,
+          POWERUP_CONFIG.strength.duracao,
+        ),
+      );
+    }
   }
   configurarGameOver() {
     document
@@ -254,6 +382,12 @@ class Jogo {
         this.personagem.getPosition(),
         this.projeteis,
       );
+
+      this.tempoDebugEstado += delta;
+      if (this.tempoDebugEstado >= 0.1) {
+        this.tempoDebugEstado = 0;
+        this.atualizarDebugEstadoJogo();
+      }
     }
 
     for (const inimigo of this.geradorInimigo.inimigos)
