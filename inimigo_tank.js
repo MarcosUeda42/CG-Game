@@ -3,7 +3,6 @@ import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import * as SkeletonUtils from "three/addons/utils/SkeletonUtils.js";
 import { TANK_CONFIG } from "./config.js";
 
-const DURACAO_DANO_FALLBACK = 0.6;
 const loaderModeloTank = new GLTFLoader();
 const cacheModelosTank = new Map();
 
@@ -99,6 +98,13 @@ export default class InimigoTank {
 
     this.hitbox = new THREE.Box3();
     this.hitboxAtaque = new THREE.Box3();
+    this._tmpDirecao = new THREE.Vector3();
+    this._tmpDirecaoGiro = new THREE.Vector3();
+    this._tmpDirecaoFrente = new THREE.Vector3();
+    this._tmpCentroHitbox = new THREE.Vector3();
+    this._tmpTamanhoHitbox = new THREE.Vector3();
+    this._tmpCentroAtaque = new THREE.Vector3();
+    this._tmpTamanhoAtaque = new THREE.Vector3();
 
     this.health = TANK_CONFIG.healthMax;
     this.healthMax = TANK_CONFIG.healthMax;
@@ -283,7 +289,7 @@ export default class InimigoTank {
       return;
     }
 
-    const direcao = new THREE.Vector3()
+    const direcao = this._tmpDirecao
       .subVectors(target, this.pivot.position)
       .setY(0);
     const distancia = direcao.length();
@@ -306,11 +312,14 @@ export default class InimigoTank {
         Math.cos(diferencaAngular),
       );
 
-      const fatorGiro = 1 - Math.exp(-8 * delta);
+      const fatorGiro =
+        1 - Math.exp(-TANK_CONFIG.movimento.velocidadeGiro * delta);
 
       this.pivot.rotation.y += diferencaAngular * fatorGiro;
 
-      const anguloMinimoParaAndar = THREE.MathUtils.degToRad(20);
+      const anguloMinimoParaAndar = THREE.MathUtils.degToRad(
+        TANK_CONFIG.movimento.anguloMaximoParaAndar,
+      );
 
       if (Math.abs(diferencaAngular) <= anguloMinimoParaAndar) {
         this.pivot.position.addScaledVector(
@@ -328,7 +337,7 @@ export default class InimigoTank {
       if (
         this.tempoDesdeUltimoAtaque >= TANK_CONFIG.ataque.cooldown &&
         this.tempoRecuperacaoAposDano <= 0 &&
-        this.estaNaFrente(target, 40)
+        this.estaNaFrente(target, TANK_CONFIG.ataque.anguloMaximoParaAtacar)
       ) {
         this.iniciarAtaque(target);
       } else {
@@ -340,11 +349,13 @@ export default class InimigoTank {
     this.atualizarBarraVida();
   }
 
-  estaNaFrente(alvoPos, anguloMaxGraus = 40) {
-    const direcao = new THREE.Vector3().subVectors(
-      alvoPos,
-      this.pivot.position,
-    );
+  estaNaFrente(
+    alvoPos,
+    anguloMaxGraus = TANK_CONFIG.ataque.anguloMaximoParaAtacar,
+  ) {
+    const direcao = this._tmpDirecaoFrente
+      .subVectors(alvoPos, this.pivot.position)
+      .setY(0);
 
     direcao.y = 0;
 
@@ -363,8 +374,12 @@ export default class InimigoTank {
     return Math.abs(diferenca) <= THREE.MathUtils.degToRad(anguloMaxGraus);
   }
 
-  girarParaAlvo(alvoPos, delta, velocidade = 6) {
-    const direcao = new THREE.Vector3()
+  girarParaAlvo(
+    alvoPos,
+    delta,
+    velocidade = TANK_CONFIG.movimento.velocidadeGiroAtaque,
+  ) {
+    const direcao = this._tmpDirecaoGiro
       .subVectors(alvoPos, this.pivot.position)
       .setY(0);
     if (direcao.lengthSq() < 0.0001) return;
@@ -407,7 +422,7 @@ export default class InimigoTank {
 
     const cfg = TANK_CONFIG.ataque.hitbox;
 
-    const centro = new THREE.Vector3(
+    const centro = this._tmpCentroAtaque.set(
       this.pivot.position.x,
       this.getYBase() + cfg.alturaCentro,
       this.pivot.position.z,
@@ -419,7 +434,7 @@ export default class InimigoTank {
     const sen = Math.sin(this.anguloAtaque);
     const cos = Math.cos(this.anguloAtaque);
 
-    const tamanho = new THREE.Vector3(
+    const tamanho = this._tmpTamanhoAtaque.set(
       Math.abs(cos) * cfg.largura + Math.abs(sen) * cfg.profundidade,
       cfg.altura,
       Math.abs(sen) * cfg.largura + Math.abs(cos) * cfg.profundidade,
@@ -501,7 +516,7 @@ export default class InimigoTank {
       if (acaoDano) {
         acaoDano.setEffectiveTimeScale(TANK_CONFIG.animacoes.velocidadeDamage);
       }
-    } else this.tempoDano = DURACAO_DANO_FALLBACK;
+    } else this.tempoDano = TANK_CONFIG.ataque.duracaoDanoFallback;
 
     return true;
   }
@@ -527,13 +542,13 @@ export default class InimigoTank {
 
     const cfg = TANK_CONFIG.hitboxCorpo;
 
-    const centro = new THREE.Vector3(
+    const centro = this._tmpCentroHitbox.set(
       this.pivot.position.x,
       this.getYBase() + cfg.alturaCentro,
       this.pivot.position.z,
     );
 
-    const tamanho = new THREE.Vector3(
+    const tamanho = this._tmpTamanhoHitbox.set(
       cfg.largura,
       cfg.altura,
       cfg.profundidade,

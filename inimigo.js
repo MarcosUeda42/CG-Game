@@ -5,7 +5,6 @@ import Projetil from "./projetil.js";
 import { ENEMY_CONFIG } from "./config.js";
 
 const ESCALA_MODELO = 0.0085;
-const DURACAO_DANO_FALLBACK = 0.6;
 const loaderModeloInimigo = new GLTFLoader();
 const cacheModelosInimigos = new Map();
 
@@ -162,7 +161,7 @@ export default class Inimigo {
     }
 
     if (this.actions["Damage"]) this.mudarAnimacao("Damage");
-    else this.tempoDano = DURACAO_DANO_FALLBACK;
+    else this.tempoDano = ENEMY_CONFIG.ataque.duracaoDanoFallback;
     return true;
   }
   registrarMorte() {
@@ -323,7 +322,8 @@ export default class Inimigo {
       const alvo = Math.atan2(direcao.x, direcao.z);
       let diferenca = alvo - this.inimigo.rotation.y;
       diferenca = Math.atan2(Math.sin(diferenca), Math.cos(diferenca));
-      this.inimigo.rotation.y += diferenca * 8 * delta;
+      this.inimigo.rotation.y +=
+        diferenca * ENEMY_CONFIG.movimento.velocidadeGiro * delta;
 
       this.mudarAnimacao("Run");
     } else this.mudarAnimacao("Idle");
@@ -343,7 +343,10 @@ export default class Inimigo {
 
     this.atualizarHitbox();
   }
-  estaNaFrente(alvoPos, anguloMaxGraus = 60) {
+  estaNaFrente(
+    alvoPos,
+    anguloMaxGraus = ENEMY_CONFIG.ataque.anguloMaximoDisparo,
+  ) {
     const frente = this._tmpFrente
       .set(0, 0, 1)
       .applyQuaternion(this.inimigo.quaternion)
@@ -376,7 +379,11 @@ export default class Inimigo {
     this.attackMode = false;
     this.mudarAnimacao("Idle");
   }
-  girarParaAlvo(alvoPos, delta, velocidade = 6) {
+  girarParaAlvo(
+    alvoPos,
+    delta,
+    velocidade = ENEMY_CONFIG.movimento.velocidadeGiroAtaque,
+  ) {
     const direcao = this._tmpDirecaoGiro
       .subVectors(alvoPos, this.inimigo.position)
       .setY(0);
@@ -391,7 +398,7 @@ export default class Inimigo {
     this.inimigo.quaternion.slerp(quatAlvo, Math.min(1, velocidade * delta));
   }
   dispararBolaDeFogo(alvoPos, listaProjeteis) {
-    const ATRASO_MS = 300;
+    const ATRASO_MS = ENEMY_CONFIG.ataque.atrasoProjecao;
 
     this.attackMode = true;
     this.carregandoMagia = true;
@@ -409,7 +416,8 @@ export default class Inimigo {
       const direcao = this._tmpDirecaoProjeteil.subVectors(alvo, origem);
       if (direcao.lengthSq() < 0.0001) return;
 
-      const anguloDesvio = (Math.random() - 0.5) * Math.PI * 0.1;
+      const anguloDesvio =
+        (Math.random() - 0.5) * Math.PI * ENEMY_CONFIG.ataque.desvioMaximo;
       direcao.applyAxisAngle(this._tmpAxisY, anguloDesvio).normalize();
 
       this.particulas?.explosao(origem, 25, 2.5, 0.5);

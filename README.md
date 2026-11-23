@@ -1,6 +1,6 @@
 # Jogo desenvolvido com conceitos de Computação Gráfica
 
-Projeto desenvolvido para a disciplina de Computação Gráfica.
+Projeto desenvolvido para a disciplina de **Computação Gráfica**.
 
 ## Equipe
 
@@ -18,13 +18,20 @@ Projeto desenvolvido para a disciplina de Computação Gráfica.
 
 ## Sobre o jogo
 
-O projeto consiste em um jogo 3D inspirado no gênero **Bullet Heaven / arcade**, desenvolvido em JavaScript utilizando **Three.js** para renderização gráfica no navegador.
+O projeto consiste em um jogo 3D, desenvolvido em JavaScript utilizando **Three.js** para renderização gráfica no navegador.
 
-O objetivo do jogador é sobreviver enquanto enfrenta inimigos que surgem continuamente pela arena.
+O objetivo do jogador é sobreviver pelo maior tempo possível enquanto enfrenta inimigos que surgem continuamente pela arena e aumentam gradualmente em quantidade ao longo da partida.
 
-Os inimigos perseguem o jogador e também podem realizar ataques à distância através de projéteis.
+Atualmente existem dois tipos principais de inimigos:
 
-Ao derrotar inimigos, o jogador recebe pontos. A pontuação obtida ao final da partida é armazenada no histórico da sessão.
+- **Mago** — persegue o jogador e realiza ataques à distância através de projéteis;
+- **Orc / Tank** — inimigo mais resistente que persegue o jogador e realiza ataques corpo a corpo.
+
+O jogador possui um combo de ataques com espada, corrida baseada em stamina e sistema de defesa com escudo.
+
+Ao derrotar inimigos, o jogador recebe pontos e pode obter power-ups temporários.
+
+A partida também possui um sistema progressivo de **Rounds**, que aumenta gradualmente a quantidade máxima de inimigos presentes na arena.
 
 ## Como jogar
 
@@ -36,145 +43,13 @@ https://marcosueda42.github.io/CG-Game/
 
 - `W`, `A`, `S`, `D` — movimentação do personagem;
 - `Mouse 1` — ataque corpo a corpo;
-- `Scroll` — zoom;
+- `Mouse 2` — defender com o escudo;
 - `Shift` — correr;
+- `Scroll` — zoom;
 - `Q` / `E` — rotacionar a câmera;
 - `C` — alternar entre os modos de câmera;
 - `Esc` — pausar o jogo.
 
 ## Objetivo
 
-O jogador deve derrotar inimigos e sobreviver pelo maior tempo possível.
-
-## Estado atual do projeto
-
-Atualmente estão implementados:
-
-- Cena 3D utilizando Three.js;
-- câmera em perspectiva;
-- câmera acompanhando o jogador;
-- dois modos de câmera;
-- rotação orbital da câmera;
-- movimentação do jogador;
-- corrida;
-- personagem principal 3D animado;
-- animações de Idle, Walk, Run, Attack, Damage e Death;
-- sistema de ataque corpo a corpo;
-- sequência de ataques;
-- hitbox de ataque;
-- possibilidade de um ataque atingir múltiplos inimigos;
-- barra de vida do jogador;
-- sistema de dano e morte do jogador;
-- knockback;
-- geração contínua de inimigos;
-- múltiplos inimigos simultâneos;
-- inimigos com barra de vida;
-- animações de movimentação, dano, ataque e morte dos inimigos;
-- perseguição do jogador pelos inimigos;
-- ataques à distância realizados pelos inimigos;
-- projéteis;
-- colisão entre projéteis e jogador;
-- sistema de pontuação;
-- histórico de pontuações da sessão;
-- tela inicial;
-- menu de pausa;
-- opção de reiniciar a partida;
-- tela de Game Over;
-- terreno texturizado;
-- árvores;
-- pedras;
-- grama;
-- tochas;
-- iluminação ambiente;
-- iluminação da lua;
-- iluminação pontual das tochas;
-- paredes delimitando a arena;
-- colisão entre jogador e paredes.
-
-## Estrutura do projeto
-
-O código foi dividido em módulos com responsabilidades específicas.
-
-```text
-CG-Game/
-├── main.js
-├── cenario.js
-├── personagem.js
-├── inimigo.js
-├── gerador_inimigo.js
-├── projetil.js
-├── camera.js
-├── controles.js
-├── renderer.js
-├── ui.js
-├── pontuacao.js
-├── historico_pontuacao.js
-├── index.html
-├── styles.css
-├── personagem/
-├── inimigo/
-├── objetos/
-├── texturas/
-└── fontes/
-```
-
-## Modelos e assets
-
-### Personagem principal
-
-Modelo e animações obtidos através do Mixamo.
-
-Fonte:  
-https://www.mixamo.com/
-
-### Inimigo
-
-Modelo e animações obtidos através do Mixamo.
-
-Fonte:  
-https://www.mixamo.com/
-
-### Rochas
-
-Fonte:  
-https://poly.pizza/m/OQvi8PIZ40
-
-### Árvores
-
-Fonte:  
-https://poly.pizza/m/s6yZuyU2y5
-
-### Grama
-
-Fonte:  
-https://poly.pizza/m/vUJjrRsFp4
-
-### Tochas
-
-Fonte:  
-https://poly.pizza/m/pNsfJzhXiD
-
-## Execução local para desenvolvimento
-
-Para modificar ou testar o projeto localmente, clone o repositório:
-
-```bash
-git clone https://github.com/MarcosUeda42/CG-Game.git
-```
-
-Depois abra a pasta utilizando um servidor local, como a extensão **Live Server** do Visual Studio Code.
-
-## Próximas etapas
-
-Entre as possíveis evoluções do projeto estão:
-
-- sistema de ondas;
-- progressão de dificuldade;
-- diferentes tipos de inimigos;
-- inimigos especiais;
-- recompensas e evolução do personagem;
-- melhorias no sistema de pontuação;
-- ranking persistente utilizando armazenamento local;
-- registro de informações adicionais das partidas;
-- efeitos visuais e sonoros;
-- otimização para maiores quantidades de inimigos e projéteis.
+O jogador deve derrotar inimigos, acumular pontos e sobreviver pelo maior tempo possível conforme a dificuldade aumenta ao longo dos Rounds.

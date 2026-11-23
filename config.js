@@ -8,11 +8,59 @@ export const PLAYER_CONFIG = {
   movimento: {
     velocidadeBase: 3,
     multiplicadorCorrida: 1.5,
+    velocidadeGiro: 10,
   },
 
   ataque: {
     velocidadeBase: 1,
     multiplicadorPreparacao: 2.6,
+    cooldownCombo: 0.2,
+    duracaoDanoFallback: 0.5,
+    duracaoTransicaoAtaque: 0.05,
+    golpes: [
+      {
+        dano: 40,
+        inicio: 0.0,
+        fim: 1.3,
+        hitInicio: 0.9,
+        hitFim: 1.1,
+        velocidade: 1,
+        hitbox: {
+          tamanho: [1.4, 1.6, 1.6],
+          distancia: 1.4,
+          altura: 0.9,
+          lateral: 0,
+        },
+      },
+      {
+        dano: 40,
+        inicio: 1.3,
+        fim: 2.5,
+        hitInicio: 0.7,
+        hitFim: 1.0,
+        velocidade: 1.5,
+        hitbox: {
+          tamanho: [2.0, 1.6, 1.6],
+          distancia: 1.4,
+          altura: 0.9,
+          lateral: 0,
+        },
+      },
+      {
+        dano: 60,
+        inicio: 2.5,
+        fim: 3.5,
+        hitInicio: 0.5,
+        hitFim: 0.7,
+        velocidade: 0.7,
+        hitbox: {
+          tamanho: [1.6, 1.8, 2.0],
+          distancia: 1.6,
+          altura: 0.9,
+          lateral: 0,
+        },
+      },
+    ],
   },
 
   stamina: {
@@ -48,6 +96,8 @@ export const ENEMY_CONFIG = {
   movimento: {
     velocidade: 2.5,
     distanciaMinima: 2,
+    velocidadeGiro: 8,
+    velocidadeGiroAtaque: 6,
   },
 
   ataque: {
@@ -55,6 +105,10 @@ export const ENEMY_CONFIG = {
     atrasoInicialAleatorioMax: 2,
     distanciaDisparo: 15,
     recuperacaoAposDano: 0.5,
+    anguloMaximoDisparo: 60,
+    duracaoDanoFallback: 0.6,
+    atrasoProjecao: 300,
+    desvioMaximo: 0.1,
   },
 
   knockback: {
@@ -74,6 +128,9 @@ export const TANK_CONFIG = {
 
   movimento: {
     velocidade: 1.6,
+    velocidadeGiro: 8,
+    velocidadeGiroAtaque: 6,
+    anguloMaximoParaAndar: 20,
   },
 
   ataque: {
@@ -81,6 +138,8 @@ export const TANK_CONFIG = {
     cooldown: 1.2,
     recuperacaoAposDano: 0.2,
     margemInicioAtaque: 0.05,
+    anguloMaximoParaAtacar: 40,
+    duracaoDanoFallback: 0.6,
 
     hitInicio: 0.65,
     hitFim: 1.05,
@@ -149,10 +208,8 @@ export const PROJECTILE_CONFIG = {
 };
 
 export const POWERUP_CONFIG = {
-  chanceDrop: 0.2,
-
-  // Probabilidade condicional considerando que ocorreu um drop.
-  chanceHealth: 0.4,
+  chanceHealth: 0.1,
+  chanceStrength: 0.1,
 
   health: {
     cura: 20,

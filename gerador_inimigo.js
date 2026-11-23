@@ -4,10 +4,16 @@ import Particulas from "./particulas.js";
 import { ENEMY_CONFIG, TANK_CONFIG, SPAWN_CONFIG } from "./config.js";
 
 export default class GeradorInimigo {
-  constructor(scene, aoInimigoMorrer = null, aoTankAtacar = null) {
+  constructor(
+    scene,
+    aoInimigoMorrer = null,
+    aoTankAtacar = null,
+    aoMudarRound = null,
+  ) {
     this.scene = scene;
     this.aoInimigoMorrer = aoInimigoMorrer;
     this.aoTankAtacar = aoTankAtacar;
+    this.aoMudarRound = aoMudarRound;
     this.inimigos = [];
     this.poolTanks = [];
     this.poolTanksPronta = false;
@@ -18,6 +24,14 @@ export default class GeradorInimigo {
     this.intervaloTank = SPAWN_CONFIG.tank.intervaloInicial;
     this.limiteTotalAtual = SPAWN_CONFIG.limiteTotal.inicial;
     this.tempoDesdeAumentoLimite = 0;
+    this.tempoJogo = 0;
+    this.tempoRoundAtual = 0;
+    this.roundAtual = 1;
+    this.roundFinal =
+      Math.ceil(
+        (SPAWN_CONFIG.limiteTotal.maximo - SPAWN_CONFIG.limiteTotal.inicial) /
+          SPAWN_CONFIG.limiteTotal.incremento,
+      ) + 1;
     this.ativo = true;
     this.particulas = new Particulas(scene, 600);
     Inimigo.preload("./inimigo/model.glb").catch((erro) => {
@@ -71,6 +85,9 @@ export default class GeradorInimigo {
   atualizar(delta, posJogador, listaProjeteis) {
     if (!this.ativo) return;
 
+    this.tempoJogo += delta;
+    this.tempoRoundAtual += delta;
+
     this.atualizarLimiteInimigos(delta);
 
     if (this.particulas) {
@@ -81,10 +98,13 @@ export default class GeradorInimigo {
     this.tempoUltimoMago += delta;
     this.tempoUltimoTank += delta;
 
+    const quantidadeMagos = this.contarInimigosPorTipo("mago");
+    const quantidadeTanks = this.contarInimigosPorTipo("tank");
+
     if (this.tempoUltimoTank >= this.intervaloTank) {
       if (
         this.podeGerarMaisInimigos() &&
-        this.contarInimigosPorTipo("tank") < SPAWN_CONFIG.tank.limiteSimultaneo
+        quantidadeTanks < SPAWN_CONFIG.tank.limiteSimultaneo
       ) {
         this.gerarTank();
         this.tempoUltimoTank = 0;
@@ -94,7 +114,7 @@ export default class GeradorInimigo {
     if (this.tempoUltimoMago >= this.intervaloMago) {
       if (
         this.podeGerarMaisInimigos() &&
-        this.contarInimigosPorTipo("mago") < SPAWN_CONFIG.mago.limiteSimultaneo
+        quantidadeMagos < SPAWN_CONFIG.mago.limiteSimultaneo
       ) {
         this.gerarMago();
         this.tempoUltimoMago = 0;
@@ -127,26 +147,41 @@ export default class GeradorInimigo {
 
     this.tempoDesdeAumentoLimite = 0;
 
+    const limiteAnterior = this.limiteTotalAtual;
+
     this.limiteTotalAtual = Math.min(
       SPAWN_CONFIG.limiteTotal.maximo,
       this.limiteTotalAtual + SPAWN_CONFIG.limiteTotal.incremento,
     );
 
+    if (this.limiteTotalAtual > limiteAnterior) {
+      this.roundAtual = Math.min(this.roundAtual + 1, this.roundFinal);
+      this.tempoRoundAtual = 0;
+
+      if (typeof this.aoMudarRound === "function") {
+        this.aoMudarRound(this.roundAtual, this.roundFinal);
+      }
+    }
+
     console.log(`Limite de inimigos aumentado para ${this.limiteTotalAtual}`);
   }
   contarInimigosPorTipo(tipo) {
-    return this.inimigos.filter(
-      (inimigo) =>
+    let total = 0;
+
+    for (const inimigo of this.inimigos) {
+      if (
         !inimigo.removido &&
-        inimigo.tipo === tipo &&
-        (tipo !== "tank" || inimigo.ativo),
-    ).length;
+        inimigo.ativo !== false &&
+        inimigo.tipo === tipo
+      ) {
+        total++;
+      }
+    }
+
+    return total;
   }
   podeGerarMaisInimigos() {
-    const quantidadeAtiva = this.inimigos.filter(
-      (inimigo) => !inimigo.removido,
-    ).length;
-    return quantidadeAtiva < this.limiteTotalAtual;
+    return this.inimigos.length < this.limiteTotalAtual;
   }
   gerarPosicaoSpawn() {
     return {
@@ -195,6 +230,27 @@ export default class GeradorInimigo {
   setIntervaloTank(valor) {
     if (valor <= 0) return;
     this.intervaloTank = valor;
+  }
+  getRoundAtual() {
+    return this.roundAtual;
+  }
+  getRoundFinal() {
+    return this.roundFinal;
+  }
+  getLimiteTotalAtual() {
+    return this.limiteTotalAtual;
+  }
+  getTempoJogo() {
+    return this.tempoJogo;
+  }
+  getTempoRoundAtual() {
+    return this.tempoRoundAtual;
+  }
+  getQuantidadeMagos() {
+    return this.contarInimigosPorTipo("mago");
+  }
+  getQuantidadeTanks() {
+    return this.contarInimigosPorTipo("tank");
   }
   removerTodos() {
     this.ativo = false;

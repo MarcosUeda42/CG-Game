@@ -3,9 +3,6 @@ import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { OBB } from "three/addons/math/OBB.js";
 import { PLAYER_CONFIG } from "./config.js";
 
-const DURACAO_DANO_FALLBACK = 0.5; // segundos, usado se não existir a animação "Damage"
-const DURACAO_TRANSICAO_ATAQUE = 0.05; // duração da pré-animação de ataque
-
 export default class Personagem {
   constructor(
     url,
@@ -62,56 +59,23 @@ export default class Personagem {
     this.rotacaoDefesa = new THREE.Matrix3();
     this.hitboxDefesaHelper = null;
 
-    this.meleeStates = [
-      {
-        //Ataque 1
-        inicio: 0.0,
-        fim: 1.3,
-        hitInicio: 0.9,
-        hitFim: 1.1,
-        dano: 40,
-        velocidade: 1,
-        hitbox: {
-          tamanho: new THREE.Vector3(1.4, 1.6, 1.6),
-          distancia: 1.4,
-          altura: 0.9,
-          lateral: 0,
-        },
+    this.meleeStates = PLAYER_CONFIG.ataque.golpes.map((golpe) => ({
+      inicio: golpe.inicio,
+      fim: golpe.fim,
+      hitInicio: golpe.hitInicio,
+      hitFim: golpe.hitFim,
+      dano: golpe.dano,
+      velocidade: golpe.velocidade,
+      hitbox: {
+        tamanho: new THREE.Vector3(...golpe.hitbox.tamanho),
+        distancia: golpe.hitbox.distancia,
+        altura: golpe.hitbox.altura,
+        lateral: golpe.hitbox.lateral,
       },
-      {
-        //Ataque 2
-        inicio: 1.3,
-        fim: 2.5,
-        hitInicio: 0.7,
-        hitFim: 1,
-        dano: 40,
-        velocidade: 1.5,
-        hitbox: {
-          tamanho: new THREE.Vector3(2.0, 1.6, 1.6),
-          distancia: 1.4,
-          altura: 0.9,
-          lateral: 0,
-        },
-      },
-      {
-        //Ataque 3
-        inicio: 2.5,
-        fim: 3.5,
-        hitInicio: 0.5,
-        hitFim: 0.7,
-        dano: 60,
-        velocidade: 0.7,
-        hitbox: {
-          tamanho: new THREE.Vector3(1.6, 1.8, 2.0),
-          distancia: 1.6,
-          altura: 0.9,
-          lateral: 0,
-        },
-      },
-    ];
+    }));
     this.tempoRecarga = 0;
     this.passoMelee = -1;
-    this.velocidadeGiro = 10;
+    this.velocidadeGiro = PLAYER_CONFIG.movimento.velocidadeGiro;
 
     this.hitbox = new THREE.Box3();
     this.hitboxHelper = null;
@@ -264,7 +228,7 @@ export default class Personagem {
 
     if (this.actions["Damage"]) this.mudarAnimacao("Damage");
     else {
-      this.tempoDano = DURACAO_DANO_FALLBACK;
+      this.tempoDano = PLAYER_CONFIG.ataque.duracaoDanoFallback;
       this.mudarAnimacao("Idle"); // evita continuar tocando o ataque durante o stun
     }
 
@@ -552,7 +516,11 @@ export default class Personagem {
       acao.enabled = true;
       acao.play();
       if (this.currentAction)
-        this.currentAction.crossFadeTo(acao, DURACAO_TRANSICAO_ATAQUE, true);
+        this.currentAction.crossFadeTo(
+          acao,
+          PLAYER_CONFIG.ataque.duracaoTransicaoAtaque,
+          true,
+        );
       this.currentAction = acao;
     }
   }
@@ -562,7 +530,7 @@ export default class Personagem {
     this.tempoAtaque = 0;
     this.proximoSolicitado = false;
     this.acertou = false;
-    this.tempoRecarga = 0.2; // pequena pausa antes de reiniciar
+    this.tempoRecarga = PLAYER_CONFIG.ataque.cooldownCombo;
   }
   acompanharQuadril(aplicar) {
     const q = this.quadril;
