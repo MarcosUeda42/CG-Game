@@ -52,6 +52,19 @@ class Jogo {
 
         this.tentarDroparPowerUp(inimigo);
       },
+      (hitboxAtaque, origem, dano) => {
+        if (this.personagem.bloquear(hitboxAtaque)) {
+          return true;
+        }
+
+        if (!hitboxAtaque.intersectsBox(this.personagem.hitbox)) {
+          return false;
+        }
+
+        this.personagem.dano(dano, origem);
+
+        return true;
+      },
     );
     this.clock = new THREE.Clock();
     this.projeteis = [];

@@ -53,6 +53,23 @@ class PowerUp {
 
         this.modelo = modeloBase.clone(true);
 
+        if (caminhoModelo === "./objetos/red_potion.glb") {
+          const objetosParaRemover = [];
+
+          this.modelo.traverse((obj) => {
+            if (
+              obj.isMesh &&
+              obj.name === "pPlane1_lambert1_0"
+            ) {
+              objetosParaRemover.push(obj);
+            }
+          });
+
+          for (const obj of objetosParaRemover) {
+            obj.parent?.remove(obj);
+          }
+        }
+
         const caixa = new THREE.Box3().setFromObject(this.modelo);
         const centro = caixa.getCenter(new THREE.Vector3());
 

@@ -37,6 +37,7 @@ export default class Inimigo {
     aoMorrer = null,
     particulas = null,
   ) {
+    this.tipo = "mago";
     this.url = url;
     this.inimigo = null;
     this.mixer = null;
@@ -61,6 +62,7 @@ export default class Inimigo {
     this.cooldownAtaque = ENEMY_CONFIG.ataque.cooldown;
     this.tempoDesdeUltimoAtaque =
       Math.random() * ENEMY_CONFIG.ataque.atrasoInicialAleatorioMax;
+    this.tempoRecuperacaoAposDano = 0;
     this.distanciaDisparo = ENEMY_CONFIG.ataque.distanciaDisparo;
 
     this.hitbox = new THREE.Box3();
@@ -101,6 +103,16 @@ export default class Inimigo {
     this.mao = null;
     this._posMao = new THREE.Vector3();
     this.offsetMao = new THREE.Vector3(0, 0, 15);
+    this._tmpDirecao = new THREE.Vector3();
+    this._tmpFrente = new THREE.Vector3();
+    this._tmpParaAlvo = new THREE.Vector3();
+    this._tmpDirecaoGiro = new THREE.Vector3();
+    this._tmpQuatAlvo = new THREE.Quaternion();
+    this._tmpCentro = new THREE.Vector3();
+    this._tmpTamanho = new THREE.Vector3();
+    this._tmpAlvoProjeteil = new THREE.Vector3();
+    this._tmpDirecaoProjeteil = new THREE.Vector3();
+    this._tmpAxisY = new THREE.Vector3(0, 1, 0);
 
     this.desenharBarra();
   }
@@ -139,6 +151,7 @@ export default class Inimigo {
 
     this.damageMode = true;
     this.carregandoMagia = false;
+    this.attackMode = false;
 
     if (origem && this.inimigo) {
       this.knockbackVel.subVectors(this.inimigo.position, origem).setY(0);
@@ -164,6 +177,7 @@ export default class Inimigo {
   terminarDano() {
     this.damageMode = false;
     this.knockbackVel.set(0, 0, 0);
+    this.tempoRecuperacaoAposDano = ENEMY_CONFIG.ataque.recuperacaoAposDano;
     this.mudarAnimacao("Idle");
   }
   mudarAnimacao(nome, duracao = 0.1) {
@@ -287,11 +301,17 @@ export default class Inimigo {
       return;
     }
 
+    if (this.tempoRecuperacaoAposDano > 0) {
+      this.tempoRecuperacaoAposDano = Math.max(
+        0,
+        this.tempoRecuperacaoAposDano - delta,
+      );
+    }
+
     if (this.attackMode) return;
 
-    const direcao = new THREE.Vector3();
-    direcao.subVectors(target, this.inimigo.position);
-    direcao.y = 0;
+    const direcao = this._tmpDirecao;
+    direcao.subVectors(target, this.inimigo.position).setY(0);
 
     const distancia = direcao.length();
 
@@ -312,7 +332,8 @@ export default class Inimigo {
     const dist = this.inimigo.position.distanceTo(target);
     if (
       dist <= this.distanciaDisparo &&
-      this.tempoDesdeUltimoAtaque >= this.cooldownAtaque
+      this.tempoDesdeUltimoAtaque >= this.cooldownAtaque &&
+      this.tempoRecuperacaoAposDano <= 0
     ) {
       if (this.estaNaFrente(target)) {
         this.dispararBolaDeFogo(target, listaProjeteis);
@@ -323,12 +344,13 @@ export default class Inimigo {
     this.atualizarHitbox();
   }
   estaNaFrente(alvoPos, anguloMaxGraus = 60) {
-    const frente = new THREE.Vector3(0, 0, 1)
+    const frente = this._tmpFrente
+      .set(0, 0, 1)
       .applyQuaternion(this.inimigo.quaternion)
       .setY(0)
       .normalize();
 
-    const paraAlvo = new THREE.Vector3()
+    const paraAlvo = this._tmpParaAlvo
       .subVectors(alvoPos, this.inimigo.position)
       .setY(0)
       .normalize();
@@ -339,10 +361,13 @@ export default class Inimigo {
   atualizarHitbox() {
     if (this.health <= 0 || !this.inimigo) return;
 
-    const centro = this.inimigo.position.clone();
-    centro.add(this.offsetHitbox);
+    const centro = this._tmpCentro
+      .copy(this.inimigo.position)
+      .add(this.offsetHitbox);
 
-    const metade = this.tamanhoHitbox.clone().multiplyScalar(0.5);
+    const metade = this._tmpTamanho
+      .copy(this.tamanhoHitbox)
+      .multiplyScalar(0.5);
 
     this.hitbox.min.copy(centro).sub(metade);
     this.hitbox.max.copy(centro).add(metade);
@@ -352,14 +377,14 @@ export default class Inimigo {
     this.mudarAnimacao("Idle");
   }
   girarParaAlvo(alvoPos, delta, velocidade = 6) {
-    const direcao = new THREE.Vector3()
+    const direcao = this._tmpDirecaoGiro
       .subVectors(alvoPos, this.inimigo.position)
       .setY(0);
     if (direcao.lengthSq() < 0.0001) return;
 
     const anguloAlvo = Math.atan2(direcao.x, direcao.z);
-    const quatAlvo = new THREE.Quaternion().setFromAxisAngle(
-      new THREE.Vector3(0, 1, 0),
+    const quatAlvo = this._tmpQuatAlvo.setFromAxisAngle(
+      this._tmpAxisY,
       anguloAlvo,
     );
 
@@ -378,16 +403,14 @@ export default class Inimigo {
 
       if (!this.attackMode || this.damageMode || this.health <= 0) return;
 
-      const origem = this.getPosicaoMao(new THREE.Vector3());
+      const origem = this.getPosicaoMao();
 
-      const alvo = alvoTravado.setY(origem.y);
-      const direcao = new THREE.Vector3().subVectors(alvo, origem);
+      const alvo = this._tmpAlvoProjeteil.copy(alvoTravado).setY(origem.y);
+      const direcao = this._tmpDirecaoProjeteil.subVectors(alvo, origem);
       if (direcao.lengthSq() < 0.0001) return;
 
       const anguloDesvio = (Math.random() - 0.5) * Math.PI * 0.1;
-      direcao
-        .applyAxisAngle(new THREE.Vector3(0, 1, 0), anguloDesvio)
-        .normalize();
+      direcao.applyAxisAngle(this._tmpAxisY, anguloDesvio).normalize();
 
       this.particulas?.explosao(origem, 25, 2.5, 0.5);
       listaProjeteis.push(new Projetil(this.scene, origem, direcao));

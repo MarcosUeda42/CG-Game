@@ -25,7 +25,7 @@ export const PLAYER_CONFIG = {
 
   defesa: {
     atraso: 0.1,
-    custoBloqueio: 10,
+    custoBloqueio: 25,
 
     hitbox: {
       largura: 1,
@@ -54,6 +54,7 @@ export const ENEMY_CONFIG = {
     cooldown: 4.0,
     atrasoInicialAleatorioMax: 2,
     distanciaDisparo: 15,
+    recuperacaoAposDano: 0.5,
   },
 
   knockback: {
@@ -64,14 +65,83 @@ export const ENEMY_CONFIG = {
   recompensa: 100,
 };
 
+export const TANK_CONFIG = {
+  healthMax: 220,
+
+  modelo: {
+    escala: 0.8,
+  },
+
+  movimento: {
+    velocidade: 1.6,
+  },
+
+  ataque: {
+    dano: 20,
+    cooldown: 1.2,
+    recuperacaoAposDano: 0.2,
+    margemInicioAtaque: 0.05,
+
+    hitInicio: 0.65,
+    hitFim: 1.05,
+
+    hitbox: {
+      largura: 2.0,
+      altura: 1.8,
+      profundidade: 2.0,
+      distancia: 1.25,
+      alturaCentro: 1.0,
+    },
+  },
+
+  hitboxCorpo: {
+    largura: 1.2,
+    altura: 2.1,
+    profundidade: 1.2,
+    alturaCentro: 1.05,
+  },
+
+  knockback: {
+    forca: 2.5,
+    atrito: 8,
+  },
+
+  recompensa: 200,
+
+  animacoes: {
+    idle: "ANM_IDLE",
+    walk: "ANM_WALK",
+    attack: "ANM_ORC_LIGHT_ATTACK",
+    damage: "ANM_DAMAGED",
+    death: "ANM_DEATH",
+
+    velocidadeDamage: 2,
+  },
+};
+
 export const SPAWN_CONFIG = {
-  intervalo: 5,
-  limiteInimigos: 5,
   areaMetade: 25,
+
+  limiteTotal: {
+    inicial: 3,
+    maximo: 10,
+    intervaloAumento: 30,
+    incremento: 1,
+  },
+
+  mago: {
+    intervaloInicial: 8,
+    limiteSimultaneo: 6,
+  },
+
+  tank: {
+    intervaloInicial: 10,
+    limiteSimultaneo: 4,
+  },
 };
 
 export const PROJECTILE_CONFIG = {
-  velocidade: 7,
+  velocidade: 8,
   tempoVida: 4,
   dano: 10,
   raio: 0.2,
