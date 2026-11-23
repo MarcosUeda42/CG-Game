@@ -25,7 +25,7 @@ O objetivo do jogador é sobreviver pelo maior tempo possível enquanto enfrenta
 Atualmente existem dois tipos principais de inimigos:
 
 - **Mago** — persegue o jogador e realiza ataques à distância através de projéteis;
-- **Orc / Tank** — inimigo mais resistente que persegue o jogador e realiza ataques corpo a corpo.
+- **Orc** — inimigo mais resistente que persegue o jogador e realiza ataques corpo a corpo.
 
 O jogador possui um combo de ataques com espada, corrida baseada em stamina e sistema de defesa com escudo.
 
@@ -188,7 +188,7 @@ Entre as possíveis evoluções do projeto estão:
 
 
 - sistema de experiência e níveis e upgrades do personagem;
-- novos power-ups move speed e atk speed;
+- novo power-up move speed;
 - refinamentos no combate;
 - adicionar ajuste de sensibilidade de câmera;
 - aprimoramento do cenário e colisões;
