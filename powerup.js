@@ -57,10 +57,7 @@ class PowerUp {
           const objetosParaRemover = [];
 
           this.modelo.traverse((obj) => {
-            if (
-              obj.isMesh &&
-              obj.name === "pPlane1_lambert1_0"
-            ) {
+            if (obj.isMesh && obj.name === "pPlane1_lambert1_0") {
               objetosParaRemover.push(obj);
             }
           });

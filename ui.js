@@ -41,10 +41,7 @@ export default class UI {
     const maxHealth = this.personagem.getHealthMax();
 
     this.mainHealth = Math.max(0, Math.min(maxHealth, value));
-    const pct =
-      maxHealth > 0
-        ? (this.mainHealth / maxHealth) * 100
-        : 0;
+    const pct = maxHealth > 0 ? (this.mainHealth / maxHealth) * 100 : 0;
 
     if (!this.healthFill) return;
 

@@ -131,7 +131,7 @@ export default class Cenario {
         const alturaTronco = 3;
         const hitbox = new THREE.Box3(
           new THREE.Vector3(x - raioTronco, 0, z - raioTronco),
-          new THREE.Vector3(x + raioTronco, alturaTronco, z + raioTronco)
+          new THREE.Vector3(x + raioTronco, alturaTronco, z + raioTronco),
         );
 
         this.hitboxesParedes.push(hitbox);

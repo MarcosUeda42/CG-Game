@@ -561,12 +561,12 @@ export default class Personagem {
 
       const posXOriginal = this.pivot.position.x;
       const posZOriginal = this.pivot.position.z;
-      
+
       this.pivot.position.x += deltaX;
       this.atualizarHitbox();
       for (const parede of this.cenario.hitboxesParedes) {
         if (this.hitbox.intersectsBox(parede)) {
-          this.pivot.position.x = posXOriginal; 
+          this.pivot.position.x = posXOriginal;
           this.atualizarHitbox();
           break;
         }
@@ -576,7 +576,7 @@ export default class Personagem {
       this.atualizarHitbox();
       for (const parede of this.cenario.hitboxesParedes) {
         if (this.hitbox.intersectsBox(parede)) {
-          this.pivot.position.z = posZOriginal; 
+          this.pivot.position.z = posZOriginal;
           this.atualizarHitbox();
           break;
         }
@@ -677,7 +677,7 @@ export default class Personagem {
       this.atualizarHitbox();
       for (const parede of this.cenario.hitboxesParedes) {
         if (this.hitbox.intersectsBox(parede)) {
-          this.pivot.position.x = posicaoAnterior.x; 
+          this.pivot.position.x = posicaoAnterior.x;
           this.atualizarHitbox();
           break;
         }
@@ -687,7 +687,7 @@ export default class Personagem {
       this.atualizarHitbox();
       for (const parede of this.cenario.hitboxesParedes) {
         if (this.hitbox.intersectsBox(parede)) {
-          this.pivot.position.z = posicaoAnterior.z; 
+          this.pivot.position.z = posicaoAnterior.z;
           this.atualizarHitbox();
           break;
         }
@@ -707,7 +707,6 @@ export default class Personagem {
       this.atualizarStamina(delta, false);
       this.mudarAnimacao("Idle");
     }
-
   }
   curar(valor) {
     if (this.morto) return;
