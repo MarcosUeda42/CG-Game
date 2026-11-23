@@ -53,3 +53,146 @@ https://marcosueda42.github.io/CG-Game/
 ## Objetivo
 
 O jogador deve derrotar inimigos, acumular pontos e sobreviver pelo maior tempo possível conforme a dificuldade aumenta ao longo dos Rounds.
+
+## Estado atual do projeto
+
+Atualmente estão implementados:
+
+- cena 3D utilizando Three.js;
+- câmera em perspectiva acompanhando o jogador;
+- dois modos de câmera;
+- rotação orbital da câmera;
+- movimentação e corrida do jogador;
+- sistema de stamina;
+- personagem principal 3D animado;
+- combo de ataques corpo a corpo;
+- sistema de defesa com escudo;
+- hitboxes de ataque, defesa e inimigos;
+- sistema de dano, morte e knockback;
+- Magos com ataques à distância;
+- Orcs / Tanks com ataques corpo a corpo;
+- geração independente de diferentes tipos de inimigos;
+- múltiplos inimigos simultâneos;
+- sistema progressivo de Rounds;
+- aumento gradual do limite de inimigos;
+- projéteis;
+- barras de vida;
+- Health Power-Up;
+- Strength Power-Up;
+- drops de power-ups;
+- sistema de pontuação;
+- histórico de pontuações da sessão;
+- tela inicial;
+- menu de pausa;
+- opção de reiniciar a partida;
+- tela de Game Over;
+- terreno texturizado;
+- árvores;
+- pedras;
+- grama;
+- tochas;
+- iluminação;
+- paredes delimitando a arena;
+- colisão entre jogador e paredes;
+- valores de balanceamento centralizados em `config.js`;
+- otimizações para múltiplos inimigos, partículas e projéteis.
+
+## Estrutura do projeto
+
+O código foi dividido em módulos com responsabilidades específicas.
+
+```text
+CG-Game/
+├── main.js
+├── config.js
+├── cenario.js
+├── personagem.js
+├── inimigo.js
+├── inimigo_tank.js
+├── gerador_inimigo.js
+├── projetil.js
+├── particulas.js
+├── powerup.js
+├── camera.js
+├── controles.js
+├── renderer.js
+├── ui.js
+├── pontuacao.js
+├── historico_pontuacao.js
+├── index.html
+├── styles.css
+├── personagem/
+├── inimigo/
+├── tank/
+├── objetos/
+├── texturas/
+└── fontes/
+```
+
+## Modelos e assets
+
+### Personagem principal
+
+Modelo e animações obtidos através do Mixamo.
+
+Fonte:  
+https://www.mixamo.com/
+
+### Mago
+
+Modelo e animações obtidos através do Mixamo.
+
+Fonte:  
+https://www.mixamo.com/
+
+### Orc / Tank
+
+Modelo **Low Poly Orc**, disponibilizado no Sketchfab sob licença Creative Commons Attribution.
+
+Fonte:  
+https://sketchfab.com/3d-models/low-poly-orc-62f1637181cb4f6aa38897f5b7ab5edf
+
+### Rochas
+
+Fonte:  
+https://poly.pizza/m/OQvi8PIZ40
+
+### Árvores
+
+Fonte:  
+https://poly.pizza/m/s6yZuyU2y5
+
+### Grama
+
+Fonte:  
+https://poly.pizza/m/vUJjrRsFp4
+
+### Tochas
+
+Fonte:  
+https://poly.pizza/m/pNsfJzhXiD
+
+## Execução local para desenvolvimento
+
+Para modificar ou testar o projeto localmente, clone o repositório:
+
+```bash
+git clone https://github.com/MarcosUeda42/CG-Game.git
+```
+
+Depois abra a pasta utilizando um servidor local, como a extensão **Live Server** do Visual Studio Code.
+
+## Próximas etapas
+
+Entre as possíveis evoluções do projeto estão:
+
+
+- sistema de experiência e níveis e upgrades do personagem;
+- novos power-ups move speed e atk speed;
+- refinamentos no combate;
+- adicionar ajuste de sensibilidade de câmera;
+- aprimoramento do cenário e colisões;
+- melhorias no histórico de partidas;
+- efeitos visuais e sonoros;
+- balanceamento e polimento geral;
+- otimizações adicionais conforme necessário.
