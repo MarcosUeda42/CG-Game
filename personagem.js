@@ -556,9 +556,31 @@ export default class Personagem {
     const offZ = this._wA.z - this._wR.z;
 
     if (aplicar && this._offX !== null) {
-      this.pivot.position.x += offX - this._offX;
-      this.pivot.position.z += offZ - this._offZ;
-      this.personagem.updateMatrixWorld(true);
+      const deltaX = offX - this._offX;
+      const deltaZ = offZ - this._offZ;
+
+      const posXOriginal = this.pivot.position.x;
+      const posZOriginal = this.pivot.position.z;
+      
+      this.pivot.position.x += deltaX;
+      this.atualizarHitbox();
+      for (const parede of this.cenario.hitboxesParedes) {
+        if (this.hitbox.intersectsBox(parede)) {
+          this.pivot.position.x = posXOriginal; 
+          this.atualizarHitbox();
+          break;
+        }
+      }
+
+      this.pivot.position.z += deltaZ;
+      this.atualizarHitbox();
+      for (const parede of this.cenario.hitboxesParedes) {
+        if (this.hitbox.intersectsBox(parede)) {
+          this.pivot.position.z = posZOriginal; 
+          this.atualizarHitbox();
+          break;
+        }
+      }
     }
 
     this._offX = offX;
@@ -591,13 +613,6 @@ export default class Personagem {
       this.controles.getKeyStatus("ShiftRight");
     this.correndo = false;
 
-    const posicaoAnterior = this._tmpPosicaoAnterior.set(
-      this.pivot.position.x * 0.999,
-      this.pivot.position.y,
-      this.pivot.position.z * 0.999,
-    );
-
-    this.atualizarHitbox();
     this.acompanharQuadril(this.passoMelee !== -1);
 
     if (this.morto) return;
@@ -643,6 +658,8 @@ export default class Personagem {
     if (this.controles.teclas["KeyD"]) direcao.add(direitaCamera);
     if (this.controles.teclas["KeyA"]) direcao.sub(direitaCamera);
 
+    const posicaoAnterior = this._tmpPosicaoAnterior.copy(this.pivot.position);
+
     if (direcao.lengthSq() > 0) {
       this.correndo = this.atualizarStamina(delta, apertandoShift);
       this.fatorCorrida = this.correndo
@@ -655,7 +672,28 @@ export default class Personagem {
         this.multiplicadorVelocidadeMovimento *
         delta;
       direcao.normalize();
-      this.pivot.position.addScaledVector(direcao, passo);
+
+      this.pivot.position.x += direcao.x * passo;
+      this.atualizarHitbox();
+      for (const parede of this.cenario.hitboxesParedes) {
+        if (this.hitbox.intersectsBox(parede)) {
+          this.pivot.position.x = posicaoAnterior.x; 
+          this.atualizarHitbox();
+          break;
+        }
+      }
+
+      this.pivot.position.z += direcao.z * passo;
+      this.atualizarHitbox();
+      for (const parede of this.cenario.hitboxesParedes) {
+        if (this.hitbox.intersectsBox(parede)) {
+          this.pivot.position.z = posicaoAnterior.z; 
+          this.atualizarHitbox();
+          break;
+        }
+      }
+      this.pivot.updateMatrixWorld(true);
+
       const alvo = Math.atan2(direcao.x, direcao.z);
 
       let diferenca = alvo - this.pivot.rotation.y;
@@ -670,13 +708,6 @@ export default class Personagem {
       this.mudarAnimacao("Idle");
     }
 
-    for (const parede of this.cenario.hitboxesParedes) {
-      if (this.hitbox.intersectsBox(parede)) {
-        this.pivot.position.copy(posicaoAnterior);
-        this.pivot.updateMatrixWorld(true);
-        break;
-      }
-    }
   }
   curar(valor) {
     if (this.morto) return;
