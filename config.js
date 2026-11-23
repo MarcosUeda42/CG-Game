@@ -217,6 +217,7 @@ export const POWERUP_CONFIG = {
 
   strength: {
     multiplicador: 2,
+    multiplicadorMaximo: 10,
     duracao: 20,
   },
 };
