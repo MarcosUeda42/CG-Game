@@ -52,7 +52,7 @@ https://marcosueda42.github.io/CG-Game/
 
 ## Objetivo
 
-O jogador deve derrotar inimigos, acumular pontos e sobreviver pelo maior tempo possível conforme a dificuldade aumenta ao longo dos Rounds.
+O jogador deve derrotar inimigos, acumular pontos e sobreviver pelo maior tempo possível conforme a dificuldade aumenta ao longo dos rounds.
 
 ## Estado atual do projeto
 
@@ -172,6 +172,18 @@ https://poly.pizza/m/vUJjrRsFp4
 Fonte:  
 https://poly.pizza/m/pNsfJzhXiD
 
+### Poções
+
+#### Poção Vermelha
+
+Fonte: 
+https://sketchfab.com/3d-models/red-potion-71467b420a9546c492859613d82e0ff5
+
+#### Poção Azul
+
+Fonte:
+https://sketchfab.com/3d-models/mana-potion-e3fa5dea38b14b7cac5659d02d94d623
+
 ## Execução local para desenvolvimento
 
 Para modificar ou testar o projeto localmente, clone o repositório:
@@ -180,14 +192,13 @@ Para modificar ou testar o projeto localmente, clone o repositório:
 git clone https://github.com/MarcosUeda42/CG-Game.git
 ```
 
-Depois abra a pasta utilizando um servidor local, como a extensão **Live Server** do Visual Studio Code.
+Depois, abra a pasta utilizando um servidor local, como a extensão **Live Server** do Visual Studio Code.
 
 ## Próximas etapas
 
 Entre as possíveis evoluções do projeto estão:
 
-
-- sistema de experiência e níveis e upgrades do personagem;
+- sistema de experiência, níveis e upgrades do personagem;
 - novo power-up move speed;
 - refinamentos no combate;
 - adicionar ajuste de sensibilidade de câmera;
